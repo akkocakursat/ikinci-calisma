@@ -3,7 +3,7 @@
 Depo bazlı ithal mısır stok ve sevkiyat takip sistemi. Next.js + Supabase + Recharts ile
 hazırlanmıştır; Vercel üzerinde yayınlanmak üzere tasarlanmıştır.
 
-**Bağlı veritabanı:** `https://enqxvjsqjmbjkcivudbe.supabase.co`
+**Bağlı veritabanı:** `https://mhqjrvghrhnyzuzeprpx.supabase.co` (Supabase "ikinci-calisma" projesi)
 
 ## Özellikler
 
@@ -29,13 +29,13 @@ hazırlanmıştır; Vercel üzerinde yayınlanmak üzere tasarlanmıştır.
 
 Yetkiler yalnızca arayüzde değil, veritabanında satır bazlı güvenlik (RLS) ile de uygulanır.
 
-## Kurulum — 3 adım
+## Kurulum
 
-### 1. Veritabanını kurun
+### 1. Veritabanı — HAZIR ✔
 
-[Supabase Dashboard](https://supabase.com/dashboard) → `enqxvjsqjmbjkcivudbe` projesi →
-**SQL Editor** → `supabase/kurulum.sql` dosyasının tamamını yapıştırıp **Run** deyin.
-Bu işlem tabloları, güvenlik kurallarını ve 21 deponun kaydını oluşturur.
+Şema, güvenlik kuralları ve 21 deponun kaydı `mhqjrvghrhnyzuzeprpx` ("ikinci-calisma")
+projesine migration olarak uygulandı. Yeniden kurulum gerekirse `supabase/kurulum.sql`
+dosyası SQL Editor'den çalıştırılabilir.
 
 ### 2. Kullanıcıları ekleyin
 
@@ -47,15 +47,14 @@ ekleyin. **İlk eklenen kullanıcı otomatik Yönetici olur.** Diğerlerinin rol
 
 1. Bu depoyu GitHub'a gönderin (push).
 2. [Vercel](https://vercel.com) → **New Project** → bu depoyu içe aktarın.
-3. **Environment Variables** bölümüne şunları girin
-   (Dashboard → Project Settings → API sayfasından):
+3. **Deploy** deyin — Supabase adresi ve herkese açık istemci anahtarı kodda
+   varsayılan olarak tanımlı olduğundan ortam değişkeni girmek zorunlu değildir.
+   Farklı bir projeye bağlamak isterseniz şu değişkenleri tanımlayın:
 
    | Değişken | Değer |
    | --- | --- |
-   | `NEXT_PUBLIC_SUPABASE_URL` | `https://enqxvjsqjmbjkcivudbe.supabase.co` |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | projenin **anon public** anahtarı |
-
-4. **Deploy** deyin.
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://mhqjrvghrhnyzuzeprpx.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | projenin **publishable** anahtarı |
 
 ## Yerel geliştirme
 

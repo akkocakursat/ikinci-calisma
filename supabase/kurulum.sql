@@ -1,9 +1,10 @@
 -- ============================================================
 -- İTHAL MISIR SEVKİYAT VE STOKLARI - VERİTABANI KURULUMU
--- Proje: https://enqxvjsqjmbjkcivudbe.supabase.co
+-- Proje: https://mhqjrvghrhnyzuzeprpx.supabase.co ("ikinci-calisma")
 --
--- Bu dosyanın TAMAMINI Supabase Dashboard > SQL Editor'e
--- yapıştırıp "Run" ile bir kez çalıştırın.
+-- NOT: Bu kurulum projeye migration olarak UYGULANDI (08.07.2026).
+-- Dosya, yeniden kurulum gerekirse referans olarak saklanmaktadır:
+-- Supabase Dashboard > SQL Editor'e yapıştırıp "Run" ile çalıştırın.
 -- ============================================================
 
 create extension if not exists "pgcrypto";
@@ -46,6 +47,9 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Tetikleyici fonksiyonu API üzerinden (RPC) çağrılamasın
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 -- Oturum açan kullanıcının rolünü döndüren yardımcı fonksiyon (RLS için).
 create or replace function public.my_role()
 returns text
@@ -56,6 +60,9 @@ set search_path = public
 as $$
   select rol from public.profiles where id = auth.uid()
 $$;
+
+-- my_role RLS politikalarında authenticated rolüyle çalışır; anon için kapat
+revoke execute on function public.my_role() from public, anon;
 
 -- ------------------------------------------------------------
 -- 2) DEPOLAR (depo adı + gemi)
