@@ -47,14 +47,11 @@ ekleyin. **İlk eklenen kullanıcı otomatik Yönetici olur.** Diğerlerinin rol
 
 1. Bu depoyu GitHub'a gönderin (push).
 2. [Vercel](https://vercel.com) → **New Project** → bu depoyu içe aktarın.
-3. **Deploy** deyin — Supabase adresi ve herkese açık istemci anahtarı kodda
-   varsayılan olarak tanımlı olduğundan ortam değişkeni girmek zorunlu değildir.
-   Farklı bir projeye bağlamak isterseniz şu değişkenleri tanımlayın:
-
-   | Değişken | Değer |
-   | --- | --- |
-   | `NEXT_PUBLIC_SUPABASE_URL` | `https://mhqjrvghrhnyzuzeprpx.supabase.co` |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | projenin **publishable** anahtarı |
+3. **Deploy** deyin — ortam değişkeni girmeyin. Supabase adresi ve herkese açık
+   istemci anahtarı bilinçli olarak kodda sabittir (`src/lib/supabase/client.ts`);
+   Vercel'de tanımlı `NEXT_PUBLIC_SUPABASE_*` değişkenleri varsa etkisizdir ve
+   silinebilir. Farklı bir Supabase projesine geçmek için o dosyadaki
+   `SUPABASE_URL` ve `SUPABASE_KEY` değerlerini güncelleyin.
 
 ## Yerel geliştirme
 

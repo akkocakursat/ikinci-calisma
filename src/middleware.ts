@@ -4,9 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Adres bilinçli olarak sabittir — bkz. src/lib/supabase/client.ts
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://mhqjrvghrhnyzuzeprpx.supabase.co",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "sb_publishable_3G5E2SPoUITGQ_IE8nmWOQ_u4Z8dzFD",
+    "https://mhqjrvghrhnyzuzeprpx.supabase.co",
+    "sb_publishable_3G5E2SPoUITGQ_IE8nmWOQ_u4Z8dzFD",
     {
       cookies: {
         getAll() {
