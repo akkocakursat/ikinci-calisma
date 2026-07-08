@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  /* Grafik renk rolleri (dataviz paleti, light) */
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --series-1: #2a78d6; /* mavi  */
+  --series-2: #1baf7a; /* aqua  */
+  --series-3: #eda100; /* sarı  */
+  --seq-450: #2a78d6;
+  --seq-600: #184f95;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--text-primary);
+}
+
+/* Sayı sütunlarının dikey hizalanması için */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="date"],
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  @apply w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20;
+}
+
+label {
+  @apply mb-1 block text-xs font-medium text-ink-2;
+}
