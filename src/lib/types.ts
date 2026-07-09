@@ -65,6 +65,19 @@ export interface FirmaDepoOzet {
   sevkiyat_sayisi: number;
 }
 
+export interface Siparis {
+  id: string;
+  firma_id: string;
+  depo_id: string;
+  miktar: number;
+  tarih: string;
+  aciklama: string | null;
+  created_by: string | null;
+  created_at: string;
+  firma?: Pick<Firma, "id" | "ad"> | null;
+  depo?: Pick<Depo, "id" | "ad" | "antrepo"> | null;
+}
+
 export function depoTamAd(d: { ad: string; antrepo?: string | null }): string {
   return d.antrepo ? `${d.ad} (${d.antrepo})` : d.ad;
 }

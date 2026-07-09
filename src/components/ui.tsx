@@ -15,7 +15,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-hairline bg-surface p-5 shadow-sm ${className}`}>
+    <section className={`rounded-2xl border border-hairline bg-surface p-5 shadow-kart ${className}`}>
       {(title || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-sm font-semibold text-ink">{title}</h2>}
@@ -39,10 +39,14 @@ export function StatCard({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-hairline bg-surface p-5 shadow-sm">
+    <div className="rounded-2xl border border-hairline bg-surface p-5 shadow-kart">
       <div className="flex items-start justify-between">
         <p className="text-xs font-medium text-ink-2">{label}</p>
-        {icon && <span className="text-muted">{icon}</span>}
+        {icon && (
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand-dark">
+            {icon}
+          </span>
+        )}
       </div>
       <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
       {sub && <p className="mt-1 text-xs text-muted">{sub}</p>}
@@ -121,9 +125,9 @@ export function Modal({
 
 export function RolRozeti({ rol }: { rol: Rol }) {
   const stiller: Record<Rol, string> = {
-    admin: "bg-brand/10 text-brand-dark",
-    editor: "bg-emerald-50 text-emerald-700",
-    viewer: "bg-amber-50 text-amber-700",
+    admin: "bg-accent text-brand-deep",
+    editor: "bg-emerald-200 text-emerald-900",
+    viewer: "bg-stone-200 text-stone-700",
   };
   return (
     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${stiller[rol]}`}>

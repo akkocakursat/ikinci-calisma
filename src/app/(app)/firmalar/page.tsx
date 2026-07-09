@@ -106,7 +106,7 @@ export default function FirmalarSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Firma</th>
                   <th className="pb-2 pr-4 text-right font-medium">Toplam Tonaj</th>
                   <th className="pb-2 pr-4 text-right font-medium">Sevkiyat Sayısı</th>
@@ -138,7 +138,7 @@ export default function FirmalarSayfasi() {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-hairline text-sm font-semibold text-ink">
+                <tr className="tablo-toplam">
                   <td className="pt-2.5 pr-4">GENEL TOPLAM</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(genelToplam)}</td>
                   <td colSpan={duzenleyebilir ? 3 : 2}></td>

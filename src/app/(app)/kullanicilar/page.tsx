@@ -72,7 +72,7 @@ export default function KullanicilarSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">E-posta</th>
                   <th className="pb-2 pr-4 font-medium">Ad Soyad</th>
                   <th className="pb-2 pr-4 font-medium">Kayıt Tarihi</th>

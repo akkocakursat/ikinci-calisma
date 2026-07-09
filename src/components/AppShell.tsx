@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  ClipboardList,
   Warehouse,
   Building2,
   BarChart3,
@@ -31,6 +32,7 @@ export function useProfil() {
 const NAV = [
   { href: "/", ad: "Genel Bakış", Icon: LayoutDashboard },
   { href: "/hareketler", ad: "Stok Hareketleri", Icon: ArrowLeftRight },
+  { href: "/siparisler", ad: "Siparişler", Icon: ClipboardList },
   { href: "/depolar", ad: "Depolar", Icon: Warehouse },
   { href: "/firmalar", ad: "Firmalar", Icon: Building2 },
   { href: "/raporlar", ad: "Raporlar", Icon: BarChart3 },
@@ -73,10 +75,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             href={href}
             onClick={() => setMenuAcik(false)}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-              aktif ? "bg-brand text-white shadow-sm" : "text-ink-2 hover:bg-page hover:text-ink"
+              aktif
+                ? "bg-white text-brand-dark shadow-sm"
+                : "text-emerald-50/80 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <Icon size={17} />
+            <Icon size={17} className={aktif ? "text-accent" : undefined} />
             {ad}
           </Link>
         );
@@ -87,11 +91,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           onClick={() => setMenuAcik(false)}
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
             pathname === "/kullanicilar"
-              ? "bg-brand text-white shadow-sm"
-              : "text-ink-2 hover:bg-page hover:text-ink"
+              ? "bg-white text-brand-dark shadow-sm"
+              : "text-emerald-50/80 hover:bg-white/10 hover:text-white"
           }`}
         >
-          <Users size={17} />
+          <Users size={17} className={pathname === "/kullanicilar" ? "text-accent" : undefined} />
           Kullanıcılar
         </Link>
       )}
@@ -99,10 +103,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   const altBilgi = (
-    <div className="border-t border-hairline pt-4">
+    <div className="border-t border-white/15 pt-4">
       {profil && (
         <div className="mb-3 px-1">
-          <p className="truncate text-sm font-medium text-ink">
+          <p className="truncate text-sm font-medium text-white">
             {profil.ad_soyad || profil.email}
           </p>
           <div className="mt-1">
@@ -112,7 +116,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
       <button
         onClick={cikisYap}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-2 transition hover:bg-page hover:text-ink"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-emerald-50/80 transition hover:bg-white/10 hover:text-white"
       >
         <LogOut size={17} />
         Çıkış Yap
@@ -124,14 +128,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <ProfilContext.Provider value={{ profil, yukleniyor }}>
       <div className="flex min-h-screen">
         {/* Masaüstü kenar çubuğu */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-hairline bg-surface p-4 lg:flex">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-gradient-to-b from-brand-deep via-[#11492a] to-brand-dark p-4 lg:flex">
           <div className="mb-6 flex items-center gap-3 px-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-deep shadow-md">
               <Ship size={18} />
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-ink">İthal Mısır</p>
-              <p className="text-xs text-muted">Sevkiyat ve Stok</p>
+              <p className="text-sm font-semibold text-white">İthal Mısır</p>
+              <p className="text-xs text-emerald-100/70">Sevkiyat ve Stok</p>
             </div>
           </div>
           {nav}
@@ -139,25 +143,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Mobil üst çubuk */}
-        <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-hairline bg-surface px-4 py-3 lg:hidden">
+        <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-brand-deep px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-brand-deep">
               <Ship size={16} />
             </div>
-            <p className="text-sm font-semibold text-ink">İthal Mısır Sevkiyat</p>
+            <p className="text-sm font-semibold text-white">İthal Mısır Sevkiyat</p>
           </div>
           <button
             onClick={() => setMenuAcik(!menuAcik)}
-            className="rounded-lg p-2 text-ink-2 hover:bg-page"
+            className="rounded-lg p-2 text-emerald-50/90 hover:bg-white/10"
             aria-label="Menü"
           >
             {menuAcik ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
         {menuAcik && (
-          <div className="fixed inset-0 z-30 bg-ink/30 lg:hidden" onClick={() => setMenuAcik(false)}>
+          <div className="fixed inset-0 z-30 bg-ink/40 lg:hidden" onClick={() => setMenuAcik(false)}>
             <div
-              className="mt-14 flex h-[calc(100%-3.5rem)] w-72 flex-col bg-surface p-4"
+              className="mt-14 flex h-[calc(100%-3.5rem)] w-72 flex-col bg-gradient-to-b from-brand-deep to-brand-dark p-4"
               onClick={(e) => e.stopPropagation()}
             >
               {nav}

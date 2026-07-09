@@ -131,7 +131,7 @@ export default function GenelBakis() {
           </Card>
           <Card title="En Çok Ürün Alan Firmalar (ilk 10, ton)">
             {firmaGrafik.length ? (
-              <YatayBarGrafik veri={firmaGrafik} renk={RENK.seri2} etiketGenislik={150} />
+              <YatayBarGrafik veri={firmaGrafik} renk={RENK.seri1} etiketGenislik={150} />
             ) : (
               <BosDurum mesaj="Henüz sevkiyat kaydı yok." />
             )}
@@ -151,7 +151,7 @@ export default function GenelBakis() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Tarih</th>
                   <th className="pb-2 pr-4 font-medium">İşlem</th>
                   <th className="pb-2 pr-4 font-medium">Depo</th>

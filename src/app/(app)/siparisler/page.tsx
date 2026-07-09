@@ -1,0 +1,320 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { Depo, DepoStok, Firma, FirmaDepoOzet, Siparis } from "@/lib/types";
+import { depoTamAd } from "@/lib/types";
+import { bugunISO, formatSayi, formatTarih, parseTonaj } from "@/lib/format";
+import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
+import { useProfil } from "@/components/AppShell";
+import SiparisTakip from "@/components/SiparisTakip";
+
+export default function SiparislerSayfasi() {
+  const { profil } = useProfil();
+  const duzenleyebilir = profil?.rol === "admin" || profil?.rol === "editor";
+  const silebilir = profil?.rol === "admin";
+
+  const [siparisler, setSiparisler] = useState<Siparis[]>([]);
+  const [depolar, setDepolar] = useState<Depo[]>([]);
+  const [firmalar, setFirmalar] = useState<Firma[]>([]);
+  const [ozet, setOzet] = useState<FirmaDepoOzet[]>([]);
+  const [stoklar, setStoklar] = useState<DepoStok[]>([]);
+  const [yukleniyor, setYukleniyor] = useState(true);
+
+  const [modalAcik, setModalAcik] = useState(false);
+  const [duzenlenen, setDuzenlenen] = useState<Siparis | null>(null);
+
+  // form alanları
+  const [firmaId, setFirmaId] = useState("");
+  const [yeniFirma, setYeniFirma] = useState("");
+  const [yeniFirmaModu, setYeniFirmaModu] = useState(false);
+  const [depoId, setDepoId] = useState("");
+  const [miktar, setMiktar] = useState("");
+  const [tarih, setTarih] = useState(bugunISO());
+  const [aciklama, setAciklama] = useState("");
+  const [hata, setHata] = useState<string | null>(null);
+  const [bekliyor, setBekliyor] = useState(false);
+
+  const yenile = useCallback(async () => {
+    const supabase = createClient();
+    const [s, d, f, o, st] = await Promise.all([
+      supabase
+        .from("siparisler")
+        .select("*, firma:firmalar(id, ad), depo:depolar(id, ad, antrepo)")
+        .order("tarih", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase.from("depolar").select("*").order("ad").order("antrepo"),
+      supabase.from("firmalar").select("*").order("ad"),
+      supabase.from("firma_depo_ozet").select("*"),
+      supabase.from("depo_stok").select("*"),
+    ]);
+    setSiparisler((s.data as Siparis[]) ?? []);
+    setDepolar((d.data as Depo[]) ?? []);
+    setFirmalar((f.data as Firma[]) ?? []);
+    setOzet((o.data as FirmaDepoOzet[]) ?? []);
+    setStoklar((st.data as DepoStok[]) ?? []);
+    setYukleniyor(false);
+  }, []);
+
+  useEffect(() => {
+    yenile();
+  }, [yenile]);
+
+  function formAc(s?: Siparis) {
+    setDuzenlenen(s ?? null);
+    setFirmaId(s?.firma_id ?? "");
+    setYeniFirma("");
+    setYeniFirmaModu(false);
+    setDepoId(s?.depo_id ?? "");
+    setMiktar(s ? String(s.miktar) : "");
+    setTarih(s?.tarih ?? bugunISO());
+    setAciklama(s?.aciklama ?? "");
+    setHata(null);
+    setModalAcik(true);
+  }
+
+  async function kaydet(e: React.FormEvent) {
+    e.preventDefault();
+    const miktarSayi = parseTonaj(miktar);
+    if (!depoId) return setHata("Lütfen depo seçin.");
+    if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
+    if (!yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
+    if (yeniFirmaModu && !yeniFirma.trim()) return setHata("Yeni firma adını yazın.");
+
+    setBekliyor(true);
+    const supabase = createClient();
+
+    let firma = firmaId || null;
+    if (yeniFirmaModu) {
+      const ad = yeniFirma.trim().toLocaleUpperCase("tr-TR");
+      const { data: mevcut } = await supabase.from("firmalar").select("id").eq("ad", ad).maybeSingle();
+      if (mevcut) {
+        firma = mevcut.id;
+      } else {
+        const { data: yeni, error } = await supabase
+          .from("firmalar")
+          .insert({ ad })
+          .select("id")
+          .single();
+        if (error) {
+          setHata("Firma eklenemedi: " + error.message);
+          setBekliyor(false);
+          return;
+        }
+        firma = yeni.id;
+      }
+    }
+
+    const kayit = {
+      firma_id: firma,
+      depo_id: depoId,
+      miktar: miktarSayi,
+      tarih,
+      aciklama: aciklama.trim() || null,
+    };
+
+    let error;
+    if (duzenlenen) {
+      ({ error } = await supabase.from("siparisler").update(kayit).eq("id", duzenlenen.id));
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      ({ error } = await supabase.from("siparisler").insert({ ...kayit, created_by: user?.id }));
+    }
+
+    setBekliyor(false);
+    if (error) {
+      setHata("Kaydedilemedi: " + error.message);
+      return;
+    }
+    setModalAcik(false);
+    yenile();
+  }
+
+  async function sil(s: Siparis) {
+    if (!confirm(`${s.firma?.ad} — ${formatSayi(Number(s.miktar))} tonluk siparişi silmek istediğinize emin misiniz?`)) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("siparisler").delete().eq("id", s.id);
+    if (error) alert("Silinemedi: " + error.message);
+    else yenile();
+  }
+
+  if (yukleniyor) return <Yukleniyor />;
+
+  return (
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Satış Siparişleri</h1>
+          <p className="mt-1 text-sm text-muted">
+            Firma siparişleri, teslim edilen ve kalan tonajların takibi
+          </p>
+        </div>
+        {duzenleyebilir && (
+          <Buton onClick={() => formAc()}>
+            <Plus size={15} /> Yeni Sipariş
+          </Buton>
+        )}
+      </header>
+
+      <Card title="Sipariş Takip Tablosu" className="mb-6">
+        <SiparisTakip siparisler={siparisler} ozet={ozet} stoklar={stoklar} />
+      </Card>
+
+      <Card title="Sipariş Kayıtları">
+        {siparisler.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="tablo-baslik">
+                  <th className="pr-4">Tarih</th>
+                  <th className="pr-4">Firma</th>
+                  <th className="pr-4">Depo</th>
+                  <th className="pr-4 text-right">Miktar (ton)</th>
+                  <th className="pr-4">Açıklama</th>
+                  {(duzenleyebilir || silebilir) && <th></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {siparisler.map((s) => (
+                  <tr key={s.id} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
+                    <td className="py-2.5 pr-4 text-ink-2">{formatTarih(s.tarih)}</td>
+                    <td className="py-2.5 pr-4 font-medium text-ink">{s.firma?.ad ?? "—"}</td>
+                    <td className="py-2.5 pr-4 text-ink">{s.depo ? depoTamAd(s.depo) : "—"}</td>
+                    <td className="tabular py-2.5 pr-4 text-right font-medium text-ink">
+                      {formatSayi(Number(s.miktar))}
+                    </td>
+                    <td className="max-w-[200px] truncate py-2.5 pr-4 text-ink-2">
+                      {s.aciklama ?? ""}
+                    </td>
+                    {(duzenleyebilir || silebilir) && (
+                      <td className="py-2.5 text-right">
+                        <span className="inline-flex gap-1">
+                          {duzenleyebilir && (
+                            <button
+                              onClick={() => formAc(s)}
+                              className="rounded-lg p-1.5 text-muted transition hover:bg-page hover:text-ink"
+                              aria-label="Düzenle"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          )}
+                          {silebilir && (
+                            <button
+                              onClick={() => sil(s)}
+                              className="rounded-lg p-1.5 text-muted transition hover:bg-red-50 hover:text-red-600"
+                              aria-label="Sil"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </span>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <BosDurum mesaj="Henüz sipariş kaydı yok." />
+        )}
+      </Card>
+
+      <Modal
+        acik={modalAcik}
+        baslik={duzenlenen ? "Siparişi Düzenle" : "Yeni Satış Siparişi"}
+        kapat={() => setModalAcik(false)}
+      >
+        <form onSubmit={kaydet} className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="sipFirma">Firma</label>
+              <button
+                type="button"
+                onClick={() => setYeniFirmaModu(!yeniFirmaModu)}
+                className="mb-1 text-xs font-medium text-brand hover:underline"
+              >
+                {yeniFirmaModu ? "Listeden seç" : "+ Yeni firma ekle"}
+              </button>
+            </div>
+            {yeniFirmaModu ? (
+              <input
+                id="sipFirma"
+                type="text"
+                value={yeniFirma}
+                onChange={(e) => setYeniFirma(e.target.value)}
+                placeholder="Yeni firma adı"
+              />
+            ) : (
+              <select id="sipFirma" value={firmaId} onChange={(e) => setFirmaId(e.target.value)}>
+                <option value="">Firma seçin…</option>
+                {firmalar.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.ad}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="sipDepo">Verilecek Depo</label>
+            <select id="sipDepo" value={depoId} onChange={(e) => setDepoId(e.target.value)} required>
+              <option value="">Depo seçin…</option>
+              {depolar
+                .filter((d) => d.aktif || d.id === duzenlenen?.depo_id)
+                .map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {depoTamAd(d)}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="sipMiktar">Sipariş Miktarı (ton)</label>
+              <input
+                id="sipMiktar"
+                type="text"
+                inputMode="decimal"
+                value={miktar}
+                onChange={(e) => setMiktar(e.target.value)}
+                placeholder="örn. 5.000"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="sipTarih">Tarih</label>
+              <input
+                id="sipTarih"
+                type="date"
+                value={tarih}
+                onChange={(e) => setTarih(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="sipAciklama">Açıklama (isteğe bağlı)</label>
+            <input
+              id="sipAciklama"
+              type="text"
+              value={aciklama}
+              onChange={(e) => setAciklama(e.target.value)}
+              placeholder="Sözleşme no, teslim şartı vb."
+            />
+          </div>
+
+          {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{hata}</p>}
+
+          <Buton tip="submit" disabled={bekliyor} className="w-full justify-center">
+            {bekliyor ? "Kaydediliyor…" : duzenlenen ? "Değişiklikleri Kaydet" : "Siparişi Kaydet"}
+          </Buton>
+        </form>
+      </Modal>
+    </div>
+  );
+}

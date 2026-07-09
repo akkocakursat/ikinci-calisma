@@ -4,24 +4,25 @@
 
 :root {
   color-scheme: light;
-  /* Grafik renk rolleri (dataviz paleti, light) */
-  --surface-1: #fcfcfb;
-  --page: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --series-1: #2a78d6; /* mavi  */
-  --series-2: #1baf7a; /* aqua  */
-  --series-3: #eda100; /* sarı  */
-  --seq-450: #2a78d6;
-  --seq-600: #184f95;
+  /* Grafik renk rolleri (dataviz paleti — yeşil/sarı tema, doğrulanmış) */
+  --surface-1: #ffffff;
+  --page: #f6f7f2;
+  --text-primary: #101410;
+  --text-secondary: #4c534c;
+  --text-muted: #848a82;
+  --gridline: #e3e5dd;
+  --baseline: #c6c9c0;
+  --series-1: #008300; /* yeşil */
+  --series-2: #eda100; /* sarı  */
 }
 
 html,
 body {
-  background: var(--page);
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(28, 122, 61, 0.07), transparent 60%),
+    radial-gradient(900px 420px at -10% 108%, rgba(237, 161, 0, 0.06), transparent 60%),
+    var(--page);
+  background-attachment: fixed;
   color: var(--text-primary);
 }
 
@@ -42,4 +43,20 @@ textarea {
 
 label {
   @apply mb-1 block text-xs font-medium text-ink-2;
+}
+
+/* ---- Kurumsal tablo stilleri ---- */
+.tablo-baslik {
+  @apply border-b border-brand/15 bg-brand/[0.06] text-left text-[11px] uppercase tracking-wider text-brand-dark;
+}
+.tablo-baslik th {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+.tablo-toplam {
+  @apply border-t-2 border-brand/25 bg-accent-soft text-sm font-semibold text-ink;
+}
+.tablo-toplam td {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
 }

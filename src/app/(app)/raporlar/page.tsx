@@ -3,16 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { DepoStok, FirmaDepoOzet } from "@/lib/types";
+import type { DepoStok, FirmaDepoOzet, Siparis } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { formatSayi } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
 import { Card, Buton, Yukleniyor, BosDurum } from "@/components/ui";
 import { GirisCikisBar } from "@/components/charts";
+import SiparisTakip from "@/components/SiparisTakip";
 
 export default function RaporlarSayfasi() {
   const [ozet, setOzet] = useState<FirmaDepoOzet[]>([]);
   const [stoklar, setStoklar] = useState<DepoStok[]>([]);
+  const [siparisler, setSiparisler] = useState<Siparis[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
@@ -20,9 +22,13 @@ export default function RaporlarSayfasi() {
     Promise.all([
       supabase.from("firma_depo_ozet").select("*"),
       supabase.from("depo_stok").select("*").order("ad"),
-    ]).then(([o, s]) => {
+      supabase
+        .from("siparisler")
+        .select("*, firma:firmalar(id, ad), depo:depolar(id, ad, antrepo)"),
+    ]).then(([o, s, sip]) => {
       setOzet((o.data as FirmaDepoOzet[]) ?? []);
       setStoklar((s.data as DepoStok[]) ?? []);
+      setSiparisler((sip.data as Siparis[]) ?? []);
       setYukleniyor(false);
     });
   }, []);
@@ -124,6 +130,10 @@ export default function RaporlarSayfasi() {
         </p>
       </header>
 
+      <Card title="Sipariş Takibi — Firma Bazlı Sipariş / Teslimat Durumu (ton)" className="mb-6">
+        <SiparisTakip siparisler={siparisler} ozet={ozet} stoklar={stoklar} />
+      </Card>
+
       <Card
         title="Firma × Depo Sevkiyat Tablosu (ton)"
         className="mb-6"
@@ -137,8 +147,8 @@ export default function RaporlarSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-xs text-muted">
-                  <th className="sticky left-0 bg-surface pb-2 pr-4 text-left font-medium">
+                <tr className="tablo-baslik">
+                  <th className="sticky left-0 bg-[#f1f7f3] pr-4 text-left">
                     Firma
                   </th>
                   {pivot.depolar.map((d) => (
@@ -172,8 +182,8 @@ export default function RaporlarSayfasi() {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-hairline font-semibold text-ink">
-                  <td className="sticky left-0 bg-surface pt-2.5 pr-4">DEPO TOPLAMI</td>
+                <tr className="tablo-toplam">
+                  <td className="sticky left-0 bg-accent-soft pr-4">DEPO TOPLAMI</td>
                   {pivot.depolar.map((d) => (
                     <td key={d.id} className="tabular whitespace-nowrap pt-2.5 px-3 text-right">
                       {formatSayi(pivot.depoToplam.get(d.id) ?? 0)}
@@ -211,7 +221,7 @@ export default function RaporlarSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Depo</th>
                   <th className="pb-2 pr-4 font-medium">Antrepo</th>
                   <th className="pb-2 pr-4 text-right font-medium">Toplam Giriş</th>
@@ -237,7 +247,7 @@ export default function RaporlarSayfasi() {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-hairline font-semibold text-ink">
+                <tr className="tablo-toplam">
                   <td className="pt-2.5 pr-4" colSpan={2}>
                     GENEL TOPLAM
                   </td>

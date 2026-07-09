@@ -186,7 +186,7 @@ export default function HareketlerSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Tarih</th>
                   <th className="pb-2 pr-4 font-medium">İşlem</th>
                   <th className="pb-2 pr-4 font-medium">Depo</th>

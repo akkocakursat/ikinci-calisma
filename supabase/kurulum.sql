@@ -110,6 +110,45 @@ create index if not exists hareketler_firma_idx on public.hareketler (firma_id);
 create index if not exists hareketler_tarih_idx on public.hareketler (tarih);
 
 -- ------------------------------------------------------------
+-- 4b) SATIŞ SİPARİŞLERİ (firma + depo bazlı söz verilen tonaj)
+-- ------------------------------------------------------------
+create table if not exists public.siparisler (
+  id uuid primary key default gen_random_uuid(),
+  firma_id uuid not null references public.firmalar(id) on delete restrict,
+  depo_id uuid not null references public.depolar(id) on delete restrict,
+  miktar numeric(12,3) not null check (miktar > 0),
+  tarih date not null default current_date,
+  aciklama text,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists siparisler_firma_idx on public.siparisler (firma_id);
+create index if not exists siparisler_depo_idx on public.siparisler (depo_id);
+
+alter table public.siparisler enable row level security;
+
+drop policy if exists "siparisler_select" on public.siparisler;
+create policy "siparisler_select" on public.siparisler
+  for select to authenticated using (true);
+
+drop policy if exists "siparisler_insert" on public.siparisler;
+create policy "siparisler_insert" on public.siparisler
+  for insert to authenticated
+  with check (public.my_role() in ('admin', 'editor'));
+
+drop policy if exists "siparisler_update" on public.siparisler;
+create policy "siparisler_update" on public.siparisler
+  for update to authenticated
+  using (public.my_role() in ('admin', 'editor'))
+  with check (public.my_role() in ('admin', 'editor'));
+
+drop policy if exists "siparisler_delete" on public.siparisler;
+create policy "siparisler_delete" on public.siparisler
+  for delete to authenticated
+  using (public.my_role() = 'admin');
+
+-- ------------------------------------------------------------
 -- 5) ÖZET GÖRÜNÜMLER (raporlar için)
 -- ------------------------------------------------------------
 create or replace view public.depo_stok

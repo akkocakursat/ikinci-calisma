@@ -150,7 +150,7 @@ export default function DepolarSayfasi() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-hairline text-left text-xs text-muted">
+                <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Depo / Antrepo</th>
                   <th className="pb-2 pr-4 text-right font-medium">Giriş (ton)</th>
                   <th className="pb-2 pr-4 text-right font-medium">Çıkış (ton)</th>
@@ -261,7 +261,7 @@ export default function DepolarSayfasi() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-hairline text-sm font-semibold text-ink">
+                <tr className="tablo-toplam">
                   <td className="pt-2.5 pr-4">GENEL TOPLAM</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.giris)}</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.cikis)}</td>
