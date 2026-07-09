@@ -33,7 +33,10 @@ export default function RaporlarSayfasi() {
     const depoMap = new Map<string, { id: string; etiket: string }>();
     for (const o of ozet) {
       if (!depoMap.has(o.depo_id))
-        depoMap.set(o.depo_id, { id: o.depo_id, etiket: depoTamAd({ ad: o.depo, gemi: o.gemi }) });
+        depoMap.set(o.depo_id, {
+          id: o.depo_id,
+          etiket: depoTamAd({ ad: o.depo, antrepo: o.antrepo }),
+        });
     }
     const depolar = [...depoMap.values()].sort((a, b) =>
       a.etiket.localeCompare(b.etiket, "tr-TR")
@@ -98,10 +101,10 @@ export default function RaporlarSayfasi() {
 
   function stokIndir() {
     csvIndir(`depo-stok-raporu-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["Depo", "Gemi", "Toplam Giriş (ton)", "Toplam Çıkış (ton)", "Kalan Stok (ton)"],
+      ["Depo", "Antrepo", "Toplam Giriş (ton)", "Toplam Çıkış (ton)", "Kalan Stok (ton)"],
       ...stoklar.map((s) => [
         s.ad,
-        s.gemi ?? "",
+        s.antrepo ?? "",
         Number(s.toplam_giris),
         Number(s.toplam_cikis),
         Number(s.kalan_stok),
@@ -210,7 +213,7 @@ export default function RaporlarSayfasi() {
               <thead>
                 <tr className="border-b border-hairline text-left text-xs text-muted">
                   <th className="pb-2 pr-4 font-medium">Depo</th>
-                  <th className="pb-2 pr-4 font-medium">Gemi</th>
+                  <th className="pb-2 pr-4 font-medium">Antrepo</th>
                   <th className="pb-2 pr-4 text-right font-medium">Toplam Giriş</th>
                   <th className="pb-2 pr-4 text-right font-medium">Toplam Çıkış</th>
                   <th className="pb-2 text-right font-medium">Kalan Stok</th>
@@ -220,7 +223,7 @@ export default function RaporlarSayfasi() {
                 {stoklar.map((s) => (
                   <tr key={s.depo_id} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                     <td className="py-2 pr-4 font-medium text-ink">{s.ad}</td>
-                    <td className="py-2 pr-4 text-ink-2">{s.gemi ?? "—"}</td>
+                    <td className="py-2 pr-4 text-ink-2">{s.antrepo ?? "—"}</td>
                     <td className="tabular py-2 pr-4 text-right text-ink-2">
                       {formatSayi(Number(s.toplam_giris))}
                     </td>

@@ -37,7 +37,7 @@ export default function HareketlerSayfasi() {
     const [h, d, f] = await Promise.all([
       supabase
         .from("hareketler")
-        .select("*, depo:depolar(id, ad, gemi), firma:firmalar(id, ad)")
+        .select("*, depo:depolar(id, ad, antrepo), firma:firmalar(id, ad)")
         .order("tarih", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(2000),
@@ -87,12 +87,13 @@ export default function HareketlerSayfasi() {
 
   function disaAktar() {
     csvIndir(`stok-hareketleri-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["Tarih", "İşlem", "Depo", "Gemi", "Firma", "Tonaj", "Açıklama"],
+      ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Tonaj", "Açıklama"],
       ...filtreli.map((h) => [
         formatTarih(h.tarih),
         h.tip === "giris" ? "Giriş" : "Sevkiyat",
         h.depo?.ad ?? "",
-        h.depo?.gemi ?? "",
+        h.depo?.antrepo ?? "",
+        h.gemi ?? "",
         h.firma?.ad ?? "",
         Number(h.tonaj),
         h.aciklama ?? "",
@@ -189,6 +190,7 @@ export default function HareketlerSayfasi() {
                   <th className="pb-2 pr-4 font-medium">Tarih</th>
                   <th className="pb-2 pr-4 font-medium">İşlem</th>
                   <th className="pb-2 pr-4 font-medium">Depo</th>
+                  <th className="pb-2 pr-4 font-medium">Gemi</th>
                   <th className="pb-2 pr-4 font-medium">Firma</th>
                   <th className="pb-2 pr-4 text-right font-medium">Tonaj</th>
                   <th className="pb-2 pr-4 font-medium">Açıklama</th>
@@ -211,6 +213,7 @@ export default function HareketlerSayfasi() {
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 text-ink">{h.depo ? depoTamAd(h.depo) : "—"}</td>
+                    <td className="py-2.5 pr-4 text-ink-2">{h.gemi ?? "—"}</td>
                     <td className="py-2.5 pr-4 text-ink">{h.firma?.ad ?? "—"}</td>
                     <td className="tabular py-2.5 pr-4 text-right font-medium text-ink">
                       {formatSayi(Number(h.tonaj))}

@@ -26,7 +26,7 @@ export default function GenelBakis() {
       supabase.from("firma_depo_ozet").select("*"),
       supabase
         .from("hareketler")
-        .select("*, depo:depolar(id, ad, gemi), firma:firmalar(id, ad)")
+        .select("*, depo:depolar(id, ad, antrepo), firma:firmalar(id, ad)")
         .order("tarih", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(8),

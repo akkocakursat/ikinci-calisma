@@ -65,15 +65,17 @@ $$;
 revoke execute on function public.my_role() from public, anon;
 
 -- ------------------------------------------------------------
--- 2) DEPOLAR (depo adı + gemi)
+-- 2) DEPOLAR (depo adı + antrepo/lokasyon)
+--    Aynı "ad" ile birden çok antrepo eklenebilir; arayüzde
+--    tek başlık altında gruplanır.
 -- ------------------------------------------------------------
 create table if not exists public.depolar (
   id uuid primary key default gen_random_uuid(),
   ad text not null,
-  gemi text,
+  antrepo text,
   aktif boolean not null default true,
   created_at timestamptz not null default now(),
-  unique (ad, gemi)
+  unique (ad, antrepo)
 );
 
 -- ------------------------------------------------------------
@@ -95,6 +97,7 @@ create table if not exists public.hareketler (
   tip text not null check (tip in ('giris', 'cikis')),
   tonaj numeric(12,3) not null check (tonaj > 0),
   tarih date not null default current_date,
+  gemi text, -- stok girişinde ürünün geldiği gemi
   aciklama text,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -114,7 +117,7 @@ with (security_invoker = on) as
 select
   d.id as depo_id,
   d.ad,
-  d.gemi,
+  d.antrepo,
   d.aktif,
   coalesce(sum(h.tonaj) filter (where h.tip = 'giris'), 0) as toplam_giris,
   coalesce(sum(h.tonaj) filter (where h.tip = 'cikis'), 0) as toplam_cikis,
@@ -130,7 +133,7 @@ select
   f.ad as firma,
   d.id as depo_id,
   d.ad as depo,
-  d.gemi,
+  d.antrepo,
   sum(h.tonaj) as toplam_tonaj,
   count(*) as sevkiyat_sayisi
 from public.hareketler h
@@ -222,9 +225,9 @@ create policy "hareketler_delete" on public.hareketler
   using (public.my_role() = 'admin');
 
 -- ------------------------------------------------------------
--- 7) MEVCUT DEPOLARIN KAYDI
+-- 7) MEVCUT DEPOLARIN KAYDI (ad, antrepo)
 -- ------------------------------------------------------------
-insert into public.depolar (ad, gemi) values
+insert into public.depolar (ad, antrepo) values
   ('TOROS',       'NEW SHAIM'),
   ('ZMA',         'LADY SHUA'),
   ('SANKO',       'MOAYAD Y'),
@@ -246,7 +249,7 @@ insert into public.depolar (ad, gemi) values
   ('KIZILOVA',    'SABEEL STAR'),
   ('SOYLU',       'SABEEL STAR'),
   ('DÖNMEZOĞLU',  'SABEEL STAR')
-on conflict (ad, gemi) do nothing;
+on conflict (ad, antrepo) do nothing;
 
 -- KURULUM TAMAM ✔
 -- Sıradaki adım: Supabase Dashboard > Authentication > Users >

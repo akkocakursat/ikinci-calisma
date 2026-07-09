@@ -25,6 +25,7 @@ export default function HareketForm({
   const [yeniFirma, setYeniFirma] = useState("");
   const [yeniFirmaModu, setYeniFirmaModu] = useState(false);
   const [tonaj, setTonaj] = useState(duzenlenen ? String(duzenlenen.tonaj) : "");
+  const [gemi, setGemi] = useState(duzenlenen?.gemi ?? "");
   const [tarih, setTarih] = useState(duzenlenen?.tarih ?? bugunISO());
   const [aciklama, setAciklama] = useState(duzenlenen?.aciklama ?? "");
   const [hata, setHata] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function HareketForm({
       tip,
       tonaj: tonajSayi,
       tarih,
+      gemi: tip === "giris" ? gemi.trim().toLocaleUpperCase("tr-TR") || null : null,
       aciklama: aciklama.trim() || null,
     };
 
@@ -161,6 +163,19 @@ export default function HareketForm({
           />
         </div>
       </div>
+
+      {tip === "giris" && (
+        <div>
+          <label htmlFor="gemi">Gemi Adı (isteğe bağlı)</label>
+          <input
+            id="gemi"
+            type="text"
+            value={gemi}
+            onChange={(e) => setGemi(e.target.value)}
+            placeholder="örn. NEW SHAIM"
+          />
+        </div>
+      )}
 
       <div>
         <label htmlFor="aciklama">Açıklama (isteğe bağlı)</label>

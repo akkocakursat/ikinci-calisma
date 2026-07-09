@@ -17,7 +17,7 @@ export interface Profil {
 export interface Depo {
   id: string;
   ad: string;
-  gemi: string | null;
+  antrepo: string | null;
   aktif: boolean;
   created_at: string;
 }
@@ -37,17 +37,18 @@ export interface Hareket {
   tip: HareketTipi;
   tonaj: number;
   tarih: string;
+  gemi: string | null;
   aciklama: string | null;
   created_by: string | null;
   created_at: string;
-  depo?: Pick<Depo, "id" | "ad" | "gemi"> | null;
+  depo?: Pick<Depo, "id" | "ad" | "antrepo"> | null;
   firma?: Pick<Firma, "id" | "ad"> | null;
 }
 
 export interface DepoStok {
   depo_id: string;
   ad: string;
-  gemi: string | null;
+  antrepo: string | null;
   aktif: boolean;
   toplam_giris: number;
   toplam_cikis: number;
@@ -59,11 +60,11 @@ export interface FirmaDepoOzet {
   firma: string;
   depo_id: string;
   depo: string;
-  gemi: string | null;
+  antrepo: string | null;
   toplam_tonaj: number;
   sevkiyat_sayisi: number;
 }
 
-export function depoTamAd(d: { ad: string; gemi?: string | null }): string {
-  return d.gemi ? `${d.ad} (${d.gemi})` : d.ad;
+export function depoTamAd(d: { ad: string; antrepo?: string | null }): string {
+  return d.antrepo ? `${d.ad} (${d.antrepo})` : d.ad;
 }
