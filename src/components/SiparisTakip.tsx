@@ -121,6 +121,12 @@ export default function SiparisTakip({
 
   function disaAktar() {
     csvIndir(`siparis-takip-${new Date().toISOString().slice(0, 10)}.csv`, [
+      ["FİRMA ÖZETİ"],
+      ["Firma", "Toplam Sipariş (ton)", "Sevk Edilen (ton)", "Açık / Kalan (ton)"],
+      ...gruplar.map((g) => [g.firma, g.siparis, g.aldigi, g.alacagi]),
+      ["GENEL TOPLAM", genel.siparis, genel.aldigi, genel.alacagi],
+      [],
+      ["DEPO BAZLI DETAY"],
       [
         "Firma",
         "Depo",
@@ -150,6 +156,70 @@ export default function SiparisTakip({
 
   return (
     <div>
+      {/* Firma bazlı özet: açık sipariş / sevk edilen / kalan */}
+      <div className="mb-6 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="tablo-baslik">
+              <th className="pr-4">Firma Özeti</th>
+              <th className="pr-4 text-right">Toplam Sipariş (ton)</th>
+              <th className="pr-4 text-right">Sevk Edilen (ton)</th>
+              <th className="pr-4 text-right">Açık / Kalan (ton)</th>
+              <th>Tamamlanma</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gruplar.map((g) => {
+              const oran =
+                g.siparis > 0 ? Math.max(0, Math.min(100, (g.aldigi / g.siparis) * 100)) : 0;
+              return (
+                <tr key={g.firma} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
+                  <td className="py-2.5 pr-4 font-medium text-ink">{g.firma}</td>
+                  <td className="tabular py-2.5 pr-4 text-right text-ink-2">
+                    {formatSayi(g.siparis)}
+                  </td>
+                  <td className="tabular py-2.5 pr-4 text-right text-ink-2">
+                    {formatSayi(g.aldigi)}
+                  </td>
+                  <td
+                    className={`tabular py-2.5 pr-4 text-right font-semibold ${
+                      g.alacagi > 0 ? "text-amber-700" : "text-brand-dark"
+                    }`}
+                  >
+                    {formatSayi(g.alacagi)}
+                  </td>
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-28 overflow-hidden rounded-full bg-hairline">
+                        <div
+                          className={`h-full rounded-full ${oran >= 100 ? "bg-brand" : "bg-accent"}`}
+                          style={{ width: `${oran}%` }}
+                        />
+                      </div>
+                      <span className="tabular text-xs text-muted">%{Math.round(oran)}</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="tablo-toplam">
+              <td className="pr-4">GENEL TOPLAM</td>
+              <td className="tabular pr-4 text-right">{formatSayi(genel.siparis)}</td>
+              <td className="tabular pr-4 text-right">{formatSayi(genel.aldigi)}</td>
+              <td className="tabular pr-4 text-right text-brand-dark">
+                {formatSayi(genel.alacagi)}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+        Depo Bazlı Detay
+      </p>
       <div className="mb-3 flex justify-end">
         <Buton tur="ikincil" onClick={disaAktar}>
           <Download size={15} /> CSV İndir
