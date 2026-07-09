@@ -79,7 +79,6 @@ export default function SiparislerSayfasi() {
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
     const miktarSayi = parseTonaj(miktar);
-    if (!depoId) return setHata("Lütfen depo seçin.");
     if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
     if (!yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
     if (yeniFirmaModu && !yeniFirma.trim()) return setHata("Yeni firma adını yazın.");
@@ -115,9 +114,9 @@ export default function SiparislerSayfasi() {
         .from("siparisler")
         .select("id", { count: "exact", head: true })
         .eq("firma_id", firma)
-        .eq("depo_id", depoId)
         .eq("miktar", miktarSayi)
         .eq("tarih", tarih);
+      sorgu = depoId ? sorgu.eq("depo_id", depoId) : sorgu.is("depo_id", null);
       if (duzenlenen) sorgu = sorgu.neq("id", duzenlenen.id);
       const { count } = await sorgu;
       if ((count ?? 0) > 0) {
@@ -130,7 +129,7 @@ export default function SiparislerSayfasi() {
 
     const kayit = {
       firma_id: firma,
-      depo_id: depoId,
+      depo_id: depoId || null, // boş = genel sipariş, her depodan düşülür
       miktar: miktarSayi,
       tarih,
       aciklama: aciklama.trim() || null,
@@ -202,7 +201,9 @@ export default function SiparislerSayfasi() {
                   <tr key={s.id} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                     <td className="py-2.5 pr-4 text-ink-2">{formatTarih(s.tarih)}</td>
                     <td className="py-2.5 pr-4 font-medium text-ink">{s.firma?.ad ?? "—"}</td>
-                    <td className="py-2.5 pr-4 text-ink">{s.depo ? depoTamAd(s.depo) : "—"}</td>
+                    <td className="py-2.5 pr-4 text-ink">
+                      {s.depo ? depoTamAd(s.depo) : <span className="italic text-muted">GENEL</span>}
+                    </td>
                     <td className="tabular py-2.5 pr-4 text-right font-medium text-ink">
                       {formatSayi(Number(s.miktar))}
                     </td>
@@ -281,9 +282,9 @@ export default function SiparislerSayfasi() {
           </div>
 
           <div>
-            <label htmlFor="sipDepo">Verilecek Depo</label>
-            <select id="sipDepo" value={depoId} onChange={(e) => setDepoId(e.target.value)} required>
-              <option value="">Depo seçin…</option>
+            <label htmlFor="sipDepo">Verilecek Depo (isteğe bağlı)</label>
+            <select id="sipDepo" value={depoId} onChange={(e) => setDepoId(e.target.value)}>
+              <option value="">GENEL — depo farketmez (her depodan düşülür)</option>
               {depolar
                 .filter((d) => d.aktif || d.id === duzenlenen?.depo_id)
                 .map((d) => (
@@ -292,6 +293,10 @@ export default function SiparislerSayfasi() {
                   </option>
                 ))}
             </select>
+            <p className="mt-1 text-xs text-muted">
+              Firma ürünü hangi depodan çekeceği belli değilse boş bırakın; hangi depodan
+              sevk ederseniz edin siparişten otomatik düşülür.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

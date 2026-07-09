@@ -115,7 +115,7 @@ create index if not exists hareketler_tarih_idx on public.hareketler (tarih);
 create table if not exists public.siparisler (
   id uuid primary key default gen_random_uuid(),
   firma_id uuid not null references public.firmalar(id) on delete restrict,
-  depo_id uuid not null references public.depolar(id) on delete restrict,
+  depo_id uuid references public.depolar(id) on delete restrict, -- boş = genel sipariş
   miktar numeric(12,3) not null check (miktar > 0),
   tarih date not null default current_date,
   aciklama text,

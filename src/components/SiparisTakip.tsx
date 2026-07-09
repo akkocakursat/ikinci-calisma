@@ -8,41 +8,22 @@ import { formatSayi } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
 import { Buton, BosDurum } from "@/components/ui";
 
-interface TakipSatiri {
+interface DepoSatiri {
+  anahtar: string;
   depoEtiket: string;
-  siparis: number;
-  aldigi: number;
-  alacagi: number;
-  depoKalan: number;
+  genel: boolean; // depo seçilmemiş "genel" sipariş satırı
+  siparis: number; // bu depoya bağlanan sipariş
+  sevk: number; // bu depodan fiilen sevk edilen
+  depoKalan: number | null; // depodaki kalan stok (genel satırda yok)
 }
 
 interface FirmaGrubu {
+  firmaId: string;
   firma: string;
-  satirlar: TakipSatiri[];
-  siparis: number;
-  aldigi: number;
-  alacagi: number;
-}
-
-function DurumRozeti({ satir }: { satir: TakipSatiri }) {
-  if (satir.alacagi <= 0)
-    return (
-      <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand-dark">
-        ✓ Tamamlandı
-      </span>
-    );
-  if (satir.alacagi > satir.depoKalan)
-    return (
-      <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
-        ⚠ Stok yetersiz
-      </span>
-    );
-  const oran = satir.siparis > 0 ? Math.round((satir.aldigi / satir.siparis) * 100) : 0;
-  return (
-    <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-      Devam ediyor · %{oran}
-    </span>
-  );
+  satirlar: DepoSatiri[];
+  siparis: number; // firmanın toplam siparişi (genel + depoya bağlı)
+  sevk: number; // firmanın TÜM depolardan çektiği toplam
+  kalan: number; // açık sipariş
 }
 
 export default function SiparisTakip({
@@ -54,100 +35,117 @@ export default function SiparisTakip({
   ozet: FirmaDepoOzet[];
   stoklar: DepoStok[];
 }) {
-  const gruplar = useMemo<FirmaGrubu[]>(() => {
-    // teslim edilen: firma+depo bazında toplam çıkış
-    const teslim = new Map<string, number>();
-    for (const o of ozet)
-      teslim.set(`${o.firma_id}|${o.depo_id}`, Number(o.toplam_tonaj));
-
+  const { gruplar, genel, toplamStok } = useMemo(() => {
     const depoKalan = new Map<string, number>();
-    for (const s of stoklar) depoKalan.set(s.depo_id, Number(s.kalan_stok));
+    let toplamStok = 0;
+    for (const s of stoklar) {
+      depoKalan.set(s.depo_id, Number(s.kalan_stok));
+      toplamStok += Number(s.kalan_stok);
+    }
 
-    // sipariş: firma+depo bazında toplanır
-    const hucre = new Map<
+    const depoEtiketleri = new Map<string, string>();
+    for (const s of stoklar) depoEtiketleri.set(s.depo_id, depoTamAd(s));
+
+    // firmanın depo bazlı fiili sevkiyatları
+    const sevkler = new Map<string, Map<string, number>>(); // firmaId -> depoId -> ton
+    for (const o of ozet) {
+      const m = sevkler.get(o.firma_id) ?? new Map<string, number>();
+      m.set(o.depo_id, (m.get(o.depo_id) ?? 0) + Number(o.toplam_tonaj));
+      sevkler.set(o.firma_id, m);
+      if (!depoEtiketleri.has(o.depo_id))
+        depoEtiketleri.set(o.depo_id, depoTamAd({ ad: o.depo, antrepo: o.antrepo }));
+    }
+
+    // firmanın siparişleri (depoya bağlı + genel)
+    const firmaMap = new Map<
       string,
-      { firma: string; depoEtiket: string; firmaId: string; depoId: string; siparis: number }
+      { firma: string; depoSiparis: Map<string, number>; genelSiparis: number }
     >();
     for (const s of siparisler) {
-      const k = `${s.firma_id}|${s.depo_id}`;
-      const mevcut = hucre.get(k) ?? {
+      const f = firmaMap.get(s.firma_id) ?? {
         firma: s.firma?.ad ?? "?",
-        depoEtiket: s.depo ? depoTamAd(s.depo) : "?",
-        firmaId: s.firma_id,
-        depoId: s.depo_id,
-        siparis: 0,
+        depoSiparis: new Map<string, number>(),
+        genelSiparis: 0,
       };
-      mevcut.siparis += Number(s.miktar);
-      hucre.set(k, mevcut);
+      if (s.depo_id) {
+        f.depoSiparis.set(s.depo_id, (f.depoSiparis.get(s.depo_id) ?? 0) + Number(s.miktar));
+        if (s.depo && !depoEtiketleri.has(s.depo_id))
+          depoEtiketleri.set(s.depo_id, depoTamAd(s.depo));
+      } else {
+        f.genelSiparis += Number(s.miktar);
+      }
+      firmaMap.set(s.firma_id, f);
     }
 
-    const firmaMap = new Map<string, FirmaGrubu>();
-    for (const h of hucre.values()) {
-      const aldigi = teslim.get(`${h.firmaId}|${h.depoId}`) ?? 0;
-      const satir: TakipSatiri = {
-        depoEtiket: h.depoEtiket,
-        siparis: h.siparis,
-        aldigi,
-        alacagi: Math.max(0, h.siparis - aldigi),
-        depoKalan: depoKalan.get(h.depoId) ?? 0,
-      };
-      const grup = firmaMap.get(h.firma) ?? {
-        firma: h.firma,
-        satirlar: [],
-        siparis: 0,
-        aldigi: 0,
-        alacagi: 0,
-      };
-      grup.satirlar.push(satir);
-      grup.siparis += satir.siparis;
-      grup.aldigi += satir.aldigi;
-      grup.alacagi += satir.alacagi;
-      firmaMap.set(h.firma, grup);
-    }
-    const liste = [...firmaMap.values()].sort((a, b) => b.siparis - a.siparis);
-    for (const g of liste)
-      g.satirlar.sort((a, b) => a.depoEtiket.localeCompare(b.depoEtiket, "tr-TR"));
-    return liste;
-  }, [siparisler, ozet, stoklar]);
+    const gruplar: FirmaGrubu[] = [...firmaMap.entries()].map(([firmaId, f]) => {
+      const firmaSevk = sevkler.get(firmaId) ?? new Map<string, number>();
 
-  const genel = useMemo(
-    () => ({
+      // detay satırları: sipariş bağlanan VEYA fiilen sevk yapılan tüm depolar
+      const depoIdleri = new Set<string>([...f.depoSiparis.keys(), ...firmaSevk.keys()]);
+      const satirlar: DepoSatiri[] = [...depoIdleri]
+        .map((depoId) => ({
+          anahtar: depoId,
+          depoEtiket: depoEtiketleri.get(depoId) ?? "?",
+          genel: false,
+          siparis: f.depoSiparis.get(depoId) ?? 0,
+          sevk: firmaSevk.get(depoId) ?? 0,
+          depoKalan: depoKalan.get(depoId) ?? 0,
+        }))
+        .sort((a, b) => a.depoEtiket.localeCompare(b.depoEtiket, "tr-TR"));
+
+      if (f.genelSiparis > 0) {
+        satirlar.unshift({
+          anahtar: "genel",
+          depoEtiket: "GENEL — depo farketmez",
+          genel: true,
+          siparis: f.genelSiparis,
+          sevk: 0,
+          depoKalan: null,
+        });
+      }
+
+      const siparis = f.genelSiparis + [...f.depoSiparis.values()].reduce((a, b) => a + b, 0);
+      const sevk = [...firmaSevk.values()].reduce((a, b) => a + b, 0);
+
+      return {
+        firmaId,
+        firma: f.firma,
+        satirlar,
+        siparis,
+        sevk,
+        kalan: Math.max(0, siparis - sevk),
+      };
+    });
+
+    gruplar.sort((a, b) => b.siparis - a.siparis);
+
+    const genel = {
       siparis: gruplar.reduce((a, g) => a + g.siparis, 0),
-      aldigi: gruplar.reduce((a, g) => a + g.aldigi, 0),
-      alacagi: gruplar.reduce((a, g) => a + g.alacagi, 0),
-    }),
-    [gruplar]
-  );
+      sevk: gruplar.reduce((a, g) => a + g.sevk, 0),
+      kalan: gruplar.reduce((a, g) => a + g.kalan, 0),
+    };
+
+    return { gruplar, genel, toplamStok };
+  }, [siparisler, ozet, stoklar]);
 
   function disaAktar() {
     csvIndir(`siparis-takip-${new Date().toISOString().slice(0, 10)}.csv`, [
       ["FİRMA ÖZETİ"],
       ["Firma", "Toplam Sipariş (ton)", "Sevk Edilen (ton)", "Açık / Kalan (ton)"],
-      ...gruplar.map((g) => [g.firma, g.siparis, g.aldigi, g.alacagi]),
-      ["GENEL TOPLAM", genel.siparis, genel.aldigi, genel.alacagi],
+      ...gruplar.map((g) => [g.firma, g.siparis, g.sevk, g.kalan]),
+      ["GENEL TOPLAM", genel.siparis, genel.sevk, genel.kalan],
       [],
       ["DEPO BAZLI DETAY"],
-      [
-        "Firma",
-        "Depo",
-        "Sipariş (ton)",
-        "Aldığı (ton)",
-        "Alacağı (ton)",
-        "Depoda Kalan (ton)",
-        "Durum",
-      ],
+      ["Firma", "Depo", "Bağlı Sipariş (ton)", "Bu Depodan Sevk (ton)", "Depoda Kalan Stok (ton)"],
       ...gruplar.flatMap((g) =>
         g.satirlar.map((s) => [
           g.firma,
           s.depoEtiket,
           s.siparis,
-          s.aldigi,
-          s.alacagi,
-          s.depoKalan,
-          s.alacagi <= 0 ? "Tamamlandı" : s.alacagi > s.depoKalan ? "Stok yetersiz" : "Devam ediyor",
+          s.genel ? "" : s.sevk,
+          s.depoKalan ?? "",
         ])
       ),
-      ["GENEL TOPLAM", "", genel.siparis, genel.aldigi, genel.alacagi, "", ""],
     ]);
   }
 
@@ -156,7 +154,7 @@ export default function SiparisTakip({
 
   return (
     <div>
-      {/* Firma bazlı özet: açık sipariş / sevk edilen / kalan */}
+      {/* Firma bazlı özet: toplam sipariş / sevk edilen / açık kalan */}
       <div className="mb-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -165,30 +163,31 @@ export default function SiparisTakip({
               <th className="pr-4 text-right">Toplam Sipariş (ton)</th>
               <th className="pr-4 text-right">Sevk Edilen (ton)</th>
               <th className="pr-4 text-right">Açık / Kalan (ton)</th>
-              <th>Tamamlanma</th>
+              <th className="pr-4">Tamamlanma</th>
+              <th>Durum</th>
             </tr>
           </thead>
           <tbody>
             {gruplar.map((g) => {
               const oran =
-                g.siparis > 0 ? Math.max(0, Math.min(100, (g.aldigi / g.siparis) * 100)) : 0;
+                g.siparis > 0 ? Math.max(0, Math.min(100, (g.sevk / g.siparis) * 100)) : 0;
               return (
-                <tr key={g.firma} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
+                <tr key={g.firmaId} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                   <td className="py-2.5 pr-4 font-medium text-ink">{g.firma}</td>
                   <td className="tabular py-2.5 pr-4 text-right text-ink-2">
                     {formatSayi(g.siparis)}
                   </td>
                   <td className="tabular py-2.5 pr-4 text-right text-ink-2">
-                    {formatSayi(g.aldigi)}
+                    {formatSayi(g.sevk)}
                   </td>
                   <td
                     className={`tabular py-2.5 pr-4 text-right font-semibold ${
-                      g.alacagi > 0 ? "text-amber-700" : "text-brand-dark"
+                      g.kalan > 0 ? "text-amber-700" : "text-brand-dark"
                     }`}
                   >
-                    {formatSayi(g.alacagi)}
+                    {formatSayi(g.kalan)}
                   </td>
-                  <td className="py-2.5">
+                  <td className="py-2.5 pr-4">
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 w-28 overflow-hidden rounded-full bg-hairline">
                         <div
@@ -199,6 +198,21 @@ export default function SiparisTakip({
                       <span className="tabular text-xs text-muted">%{Math.round(oran)}</span>
                     </div>
                   </td>
+                  <td className="py-2.5">
+                    {g.kalan <= 0 ? (
+                      <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand-dark">
+                        ✓ Tamamlandı
+                      </span>
+                    ) : g.kalan > toplamStok ? (
+                      <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                        ⚠ Stok yetersiz
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                        Devam ediyor
+                      </span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -207,20 +221,19 @@ export default function SiparisTakip({
             <tr className="tablo-toplam">
               <td className="pr-4">GENEL TOPLAM</td>
               <td className="tabular pr-4 text-right">{formatSayi(genel.siparis)}</td>
-              <td className="tabular pr-4 text-right">{formatSayi(genel.aldigi)}</td>
-              <td className="tabular pr-4 text-right text-brand-dark">
-                {formatSayi(genel.alacagi)}
-              </td>
-              <td></td>
+              <td className="tabular pr-4 text-right">{formatSayi(genel.sevk)}</td>
+              <td className="tabular pr-4 text-right text-brand-dark">{formatSayi(genel.kalan)}</td>
+              <td colSpan={2}></td>
             </tr>
           </tfoot>
         </table>
       </div>
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-        Depo Bazlı Detay
-      </p>
-      <div className="mb-3 flex justify-end">
+      {/* Depo bazlı detay: sipariş nereye bağlandı, fiilen nereden çekildi */}
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          Depo Bazlı Detay — sipariş bağlantısı ve fiili çekişler
+        </p>
         <Buton tur="ikincil" onClick={disaAktar}>
           <Download size={15} /> CSV İndir
         </Buton>
@@ -230,79 +243,43 @@ export default function SiparisTakip({
           <thead>
             <tr className="tablo-baslik">
               <th className="pr-4">Firma / Depo</th>
-              <th className="pr-4 text-right">Sipariş (ton)</th>
-              <th className="pr-4 text-right">Aldığı (ton)</th>
-              <th className="pr-4 text-right">Alacağı (ton)</th>
-              <th className="pr-4 text-right">Depoda Kalan (ton)</th>
-              <th className="pr-4">Teslimat</th>
-              <th>Durum</th>
+              <th className="pr-4 text-right">Bağlı Sipariş (ton)</th>
+              <th className="pr-4 text-right">Bu Depodan Sevk (ton)</th>
+              <th className="text-right">Depoda Kalan Stok (ton)</th>
             </tr>
           </thead>
           <tbody>
             {gruplar.map((g) => [
-              <tr key={g.firma} className="border-b border-hairline/60 bg-brand/[0.035]">
+              <tr key={g.firmaId} className="border-b border-hairline/60 bg-brand/[0.035]">
                 <td className="py-2.5 pr-4 font-semibold text-ink">{g.firma}</td>
                 <td className="tabular py-2.5 pr-4 text-right font-semibold text-ink">
                   {formatSayi(g.siparis)}
                 </td>
                 <td className="tabular py-2.5 pr-4 text-right font-semibold text-ink">
-                  {formatSayi(g.aldigi)}
+                  {formatSayi(g.sevk)}
                 </td>
-                <td className="tabular py-2.5 pr-4 text-right font-semibold text-brand-dark">
-                  {formatSayi(g.alacagi)}
+                <td className="tabular py-2.5 text-right font-semibold text-brand-dark">
+                  kalan: {formatSayi(g.kalan)}
                 </td>
-                <td className="py-2.5 pr-4"></td>
-                <td className="py-2.5 pr-4"></td>
-                <td className="py-2.5"></td>
               </tr>,
-              ...g.satirlar.map((s) => {
-                const oran =
-                  s.siparis > 0 ? Math.max(0, Math.min(100, (s.aldigi / s.siparis) * 100)) : 0;
-                return (
-                  <tr key={g.firma + s.depoEtiket} className="border-b border-hairline/40 last:border-0">
-                    <td className="py-2 pl-6 pr-4 text-ink-2">{s.depoEtiket}</td>
-                    <td className="tabular py-2 pr-4 text-right text-ink-2">
-                      {formatSayi(s.siparis)}
-                    </td>
-                    <td className="tabular py-2 pr-4 text-right text-ink-2">
-                      {formatSayi(s.aldigi)}
-                    </td>
-                    <td className="tabular py-2 pr-4 text-right font-medium text-ink">
-                      {formatSayi(s.alacagi)}
-                    </td>
-                    <td className="tabular py-2 pr-4 text-right text-ink-2">
-                      {formatSayi(s.depoKalan)}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-hairline">
-                          <div
-                            className={`h-full rounded-full ${oran >= 100 ? "bg-brand" : "bg-accent"}`}
-                            style={{ width: `${oran}%` }}
-                          />
-                        </div>
-                        <span className="tabular text-xs text-muted">%{Math.round(oran)}</span>
-                      </div>
-                    </td>
-                    <td className="py-2">
-                      <DurumRozeti satir={s} />
-                    </td>
-                  </tr>
-                );
-              }),
+              ...g.satirlar.map((s) => (
+                <tr key={g.firmaId + s.anahtar} className="border-b border-hairline/40 last:border-0">
+                  <td className={`py-2 pl-6 pr-4 ${s.genel ? "italic text-muted" : "text-ink-2"}`}>
+                    {s.depoEtiket}
+                  </td>
+                  <td className="tabular py-2 pr-4 text-right text-ink-2">
+                    {s.siparis ? formatSayi(s.siparis) : "·"}
+                  </td>
+                  <td className="tabular py-2 pr-4 text-right text-ink-2">
+                    {s.genel ? "—" : s.sevk ? formatSayi(s.sevk) : "·"}
+                  </td>
+                  <td className="tabular py-2 text-right text-ink-2">
+                    {s.depoKalan === null ? "—" : formatSayi(s.depoKalan)}
+                  </td>
+                </tr>
+              )),
             ])}
           </tbody>
-          <tfoot>
-            <tr className="tablo-toplam">
-              <td className="pr-4">GENEL TOPLAM</td>
-              <td className="tabular pr-4 text-right">{formatSayi(genel.siparis)}</td>
-              <td className="tabular pr-4 text-right">{formatSayi(genel.aldigi)}</td>
-              <td className="tabular pr-4 text-right text-brand-dark">
-                {formatSayi(genel.alacagi)}
-              </td>
-              <td colSpan={3}></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>

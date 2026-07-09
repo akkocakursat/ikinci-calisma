@@ -69,7 +69,7 @@ export interface FirmaDepoOzet {
 export interface Siparis {
   id: string;
   firma_id: string;
-  depo_id: string;
+  depo_id: string | null; // boş = genel sipariş (hangi depodan çekileceği belli değil)
   miktar: number;
   tarih: string;
   aciklama: string | null;
