@@ -28,3 +28,19 @@ export function formatTarih(iso: string): string {
 export function bugunISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+// Türkçe biçimli tonaj girdisini sayıya çevirir:
+// "23.147,500" -> 23147.5 | "1.250" -> 1250 | "1250,75" -> 1250.75 | "850" -> 850
+export function parseTonaj(girdi: string): number | null {
+  let s = girdi.trim().replace(/\s/g, "");
+  if (!s) return null;
+  if (s.includes(",")) {
+    // virgül ondalık ayracı, noktalar binlik ayracı
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+    // yalnızca nokta ve 3'erli gruplar: binlik ayraç ("1.250" = 1250)
+    s = s.replace(/\./g, "");
+  }
+  const n = Number(s);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}

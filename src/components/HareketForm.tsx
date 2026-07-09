@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Depo, Firma, Hareket, HareketTipi } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
-import { bugunISO } from "@/lib/format";
+import { bugunISO, parseTonaj } from "@/lib/format";
 import { Buton } from "@/components/ui";
 
 export default function HareketForm({
@@ -34,9 +34,9 @@ export default function HareketForm({
     e.preventDefault();
     setHata(null);
 
-    const tonajSayi = Number(tonaj.replace(",", "."));
+    const tonajSayi = parseTonaj(tonaj);
     if (!depoId) return setHata("Lütfen depo seçin.");
-    if (!tonajSayi || tonajSayi <= 0) return setHata("Tonaj sıfırdan büyük olmalı.");
+    if (!tonajSayi) return setHata("Tonaj sıfırdan büyük bir sayı olmalı (örn. 23.147,500).");
     if (tip === "cikis" && !yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
     if (tip === "cikis" && yeniFirmaModu && !yeniFirma.trim())
       return setHata("Yeni firma adını yazın.");
@@ -146,7 +146,7 @@ export default function HareketForm({
             inputMode="decimal"
             value={tonaj}
             onChange={(e) => setTonaj(e.target.value)}
-            placeholder="örn. 250,500"
+            placeholder="ton — örn. 1.250,500"
             required
           />
         </div>
