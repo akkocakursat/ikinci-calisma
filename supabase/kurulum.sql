@@ -160,7 +160,8 @@ select
   d.aktif,
   coalesce(sum(h.tonaj) filter (where h.tip = 'giris'), 0) as toplam_giris,
   coalesce(sum(h.tonaj) filter (where h.tip = 'cikis'), 0) as toplam_cikis,
-  coalesce(sum(case when h.tip = 'giris' then h.tonaj else -h.tonaj end), 0) as kalan_stok
+  coalesce(sum(case when h.tip = 'giris' then h.tonaj else -h.tonaj end), 0) as kalan_stok,
+  string_agg(distinct h.gemi, ', ') filter (where h.tip = 'giris' and h.gemi is not null) as gemiler
 from public.depolar d
 left join public.hareketler h on h.depo_id = d.id
 group by d.id;

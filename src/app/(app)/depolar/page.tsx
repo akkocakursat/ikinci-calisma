@@ -21,6 +21,7 @@ interface DepoGrubu {
   giris: number;
   cikis: number;
   kalan: number;
+  gemiler: string;
 }
 
 function DolulukCubugu({ giris, kalan }: { giris: number; kalan: number }) {
@@ -65,13 +66,19 @@ export default function DepolarSayfasi() {
       m.set(s.ad, liste);
     }
     return [...m.entries()]
-      .map(([ad, alt]) => ({
-        ad,
-        alt,
-        giris: alt.reduce((a, s) => a + Number(s.toplam_giris), 0),
-        cikis: alt.reduce((a, s) => a + Number(s.toplam_cikis), 0),
-        kalan: alt.reduce((a, s) => a + Number(s.kalan_stok), 0),
-      }))
+      .map(([ad, alt]) => {
+        const gemiSeti = new Set<string>();
+        for (const s of alt)
+          for (const gemi of (s.gemiler ?? "").split(", ")) if (gemi) gemiSeti.add(gemi);
+        return {
+          ad,
+          alt,
+          giris: alt.reduce((a, s) => a + Number(s.toplam_giris), 0),
+          cikis: alt.reduce((a, s) => a + Number(s.toplam_cikis), 0),
+          kalan: alt.reduce((a, s) => a + Number(s.kalan_stok), 0),
+          gemiler: [...gemiSeti].join(", "),
+        };
+      })
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr-TR"));
   }, [stoklar]);
 
@@ -152,6 +159,7 @@ export default function DepolarSayfasi() {
               <thead>
                 <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Depo / Antrepo</th>
+                  <th className="pb-2 pr-4 font-medium">Gemi</th>
                   <th className="pb-2 pr-4 text-right font-medium">Giriş (ton)</th>
                   <th className="pb-2 pr-4 text-right font-medium">Çıkış (ton)</th>
                   <th className="pb-2 pr-4 text-right font-medium">Kalan (ton)</th>
@@ -182,6 +190,9 @@ export default function DepolarSayfasi() {
                           </span>
                         </span>
                       </td>
+                      <td className="max-w-[220px] truncate py-2.5 pr-4 text-xs text-muted">
+                        {g.gemiler || "—"}
+                      </td>
                       <td className="tabular py-2.5 pr-4 text-right text-ink-2">
                         {formatSayi(g.giris)}
                       </td>
@@ -209,6 +220,9 @@ export default function DepolarSayfasi() {
                           >
                             <td className="py-2 pl-9 pr-4 text-ink">
                               {s.antrepo ?? "(antrepo belirtilmemiş)"}
+                            </td>
+                            <td className="max-w-[220px] truncate py-2 pr-4 text-ink-2">
+                              {s.gemiler ?? "—"}
                             </td>
                             <td className="tabular py-2 pr-4 text-right text-ink-2">
                               {formatSayi(Number(s.toplam_giris))}
@@ -262,7 +276,9 @@ export default function DepolarSayfasi() {
               </tbody>
               <tfoot>
                 <tr className="tablo-toplam">
-                  <td className="pt-2.5 pr-4">GENEL TOPLAM</td>
+                  <td className="pt-2.5 pr-4" colSpan={2}>
+                    GENEL TOPLAM
+                  </td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.giris)}</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.cikis)}</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.kalan)}</td>

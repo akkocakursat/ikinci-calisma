@@ -53,6 +53,7 @@ export interface DepoStok {
   toplam_giris: number;
   toplam_cikis: number;
   kalan_stok: number;
+  gemiler?: string | null; // depoya giriş yapılan gemilerin listesi
 }
 
 export interface FirmaDepoOzet {
