@@ -35,6 +35,7 @@ export default function SiparislerSayfasi() {
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
+  const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
@@ -71,6 +72,7 @@ export default function SiparislerSayfasi() {
     setTarih(s?.tarih ?? bugunISO());
     setAciklama(s?.aciklama ?? "");
     setHata(null);
+    setMukerrerUyarisi(null);
     setModalAcik(true);
   }
 
@@ -105,6 +107,26 @@ export default function SiparislerSayfasi() {
         firma = yeni.id;
       }
     }
+
+    // Mükerrer kontrolü: aynı firma + depo + miktar + tarih siparişi var mı?
+    const kombinasyon = [firma, depoId, miktarSayi, tarih].join("|");
+    if (mukerrerUyarisi !== kombinasyon) {
+      let sorgu = supabase
+        .from("siparisler")
+        .select("id", { count: "exact", head: true })
+        .eq("firma_id", firma)
+        .eq("depo_id", depoId)
+        .eq("miktar", miktarSayi)
+        .eq("tarih", tarih);
+      if (duzenlenen) sorgu = sorgu.neq("id", duzenlenen.id);
+      const { count } = await sorgu;
+      if ((count ?? 0) > 0) {
+        setMukerrerUyarisi(kombinasyon);
+        setBekliyor(false);
+        return;
+      }
+    }
+    setMukerrerUyarisi(null);
 
     const kayit = {
       firma_id: firma,
@@ -310,8 +332,27 @@ export default function SiparislerSayfasi() {
 
           {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{hata}</p>}
 
-          <Buton tip="submit" disabled={bekliyor} className="w-full justify-center">
-            {bekliyor ? "Kaydediliyor…" : duzenlenen ? "Değişiklikleri Kaydet" : "Siparişi Kaydet"}
+          {mukerrerUyarisi && (
+            <p className="rounded-lg border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-amber-900">
+              ⚠ <b>Mükerrer kayıt uyarısı:</b> Aynı firma, depo, miktar ve tarihte bir sipariş
+              zaten mevcut. Mükerrer <b>değilse</b> aşağıdaki butona tekrar basarak onaylayın;
+              mükerrerse pencereyi kapatın.
+            </p>
+          )}
+
+          <Buton
+            tip="submit"
+            disabled={bekliyor}
+            tur={mukerrerUyarisi ? "tehlike" : "birincil"}
+            className="w-full justify-center"
+          >
+            {bekliyor
+              ? "Kaydediliyor…"
+              : mukerrerUyarisi
+                ? "Mükerrer Değil, Yine de Kaydet"
+                : duzenlenen
+                  ? "Değişiklikleri Kaydet"
+                  : "Siparişi Kaydet"}
           </Buton>
         </form>
       </Modal>

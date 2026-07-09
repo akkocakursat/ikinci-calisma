@@ -30,6 +30,9 @@ export default function HareketForm({
   const [aciklama, setAciklama] = useState(duzenlenen?.aciklama ?? "");
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
+  // mükerrer kayıt uyarısı: uyarılan değer kombinasyonu saklanır,
+  // kullanıcı aynı değerlerle ikinci kez "Kaydet"e basarsa onaylanmış sayılır
+  const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
 
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +68,27 @@ export default function HareketForm({
         firma = yeni.id;
       }
     }
+
+    // Mükerrer kontrolü: aynı tarih + depo + tip + tonaj (+ firma) kaydı var mı?
+    const kombinasyon = [depoId, tip, tonajSayi, tarih, firma ?? ""].join("|");
+    if (mukerrerUyarisi !== kombinasyon) {
+      let sorgu = supabase
+        .from("hareketler")
+        .select("id", { count: "exact", head: true })
+        .eq("depo_id", depoId)
+        .eq("tip", tip)
+        .eq("tonaj", tonajSayi)
+        .eq("tarih", tarih);
+      if (tip === "cikis" && firma) sorgu = sorgu.eq("firma_id", firma);
+      if (duzenlenen) sorgu = sorgu.neq("id", duzenlenen.id);
+      const { count } = await sorgu;
+      if ((count ?? 0) > 0) {
+        setMukerrerUyarisi(kombinasyon);
+        setBekliyor(false);
+        return;
+      }
+    }
+    setMukerrerUyarisi(null);
 
     const kayit = {
       depo_id: depoId,
@@ -190,8 +214,29 @@ export default function HareketForm({
 
       {hata && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{hata}</p>}
 
-      <Buton tip="submit" disabled={bekliyor} className="w-full justify-center">
-        {bekliyor ? "Kaydediliyor…" : duzenlenen ? "Değişiklikleri Kaydet" : tip === "giris" ? "Stok Girişi Kaydet" : "Sevkiyatı Kaydet"}
+      {mukerrerUyarisi && (
+        <p className="rounded-lg border border-accent/40 bg-accent-soft px-3 py-2 text-sm text-amber-900">
+          ⚠ <b>Mükerrer kayıt uyarısı:</b> Aynı tarih, depo{tip === "cikis" ? ", firma" : ""} ve
+          tonajda bir kayıt zaten mevcut. Bu kayıt mükerrer <b>değilse</b> aşağıdaki butona tekrar
+          basarak onaylayın; mükerrerse pencereyi kapatın.
+        </p>
+      )}
+
+      <Buton
+        tip="submit"
+        disabled={bekliyor}
+        tur={mukerrerUyarisi ? "tehlike" : "birincil"}
+        className="w-full justify-center"
+      >
+        {bekliyor
+          ? "Kaydediliyor…"
+          : mukerrerUyarisi
+            ? "Mükerrer Değil, Yine de Kaydet"
+            : duzenlenen
+              ? "Değişiklikleri Kaydet"
+              : tip === "giris"
+                ? "Stok Girişi Kaydet"
+                : "Sevkiyatı Kaydet"}
       </Buton>
     </form>
   );
