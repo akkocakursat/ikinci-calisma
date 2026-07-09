@@ -225,31 +225,10 @@ create policy "hareketler_delete" on public.hareketler
   using (public.my_role() = 'admin');
 
 -- ------------------------------------------------------------
--- 7) MEVCUT DEPOLARIN KAYDI (ad, antrepo)
+-- 7) DEPOLAR
 -- ------------------------------------------------------------
-insert into public.depolar (ad, antrepo) values
-  ('TOROS',       'NEW SHAIM'),
-  ('ZMA',         'LADY SHUA'),
-  ('SANKO',       'MOAYAD Y'),
-  ('DÖNMEZOĞLU',  'MİLAS-SİNCAN'),
-  ('DÖNMEZOĞLU',  'MİLAS-ÖZERLİ'),
-  ('DÖNMEZOĞLU',  'MİLAS-AKÇAY'),
-  ('DÖNMEZOĞLU',  'MİLAS-DÖRTYOL'),
-  ('DÖNMEZOĞLU',  'PRİNCE FAORUK'),
-  ('KARCAN',      'SMS PANAMERA'),
-  ('TATLOG',      'SMS PANAMERA'),
-  ('GÜLTEKİN',    'SMS PANAMERA'),
-  ('BANMAR',      'MUSTAFA BEY'),
-  ('KARASU',      'BJ EXPRESS'),
-  ('BATIÇİM',     'SCOTLAND'),
-  ('TOSYALI',     'AL KARRAR'),
-  ('SERTEL',      'SCOTLAND'),
-  ('TİRYAKİ',     'AL KARRAR'),
-  ('TATLOG',      'MV RİZE'),
-  ('KIZILOVA',    'SABEEL STAR'),
-  ('SOYLU',       'SABEEL STAR'),
-  ('DÖNMEZOĞLU',  'SABEEL STAR')
-on conflict (ad, antrepo) do nothing;
+-- Depolar hazır liste ile OLUŞTURULMAZ; kullanıcı sitedeki
+-- "Depolar > Yeni Depo / Antrepo" ekranından kendisi ekler.
 
 -- KURULUM TAMAM ✔
 -- Sıradaki adım: Supabase Dashboard > Authentication > Users >
