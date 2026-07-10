@@ -170,6 +170,60 @@ export default function DepolarSayfasi() {
               </thead>
               <tbody>
                 {gruplar.map((g) => {
+                  // Tek kaydı olan ve antreposu bulunmayan depo: düz satır, açılmaz
+                  const duzSatir = g.alt.length === 1 && !g.alt[0].antrepo;
+                  if (duzSatir) {
+                    const s = g.alt[0];
+                    return [
+                      <tr key={g.ad} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
+                        <td className="py-2.5 pl-[26px] pr-4 font-semibold text-ink">{g.ad}</td>
+                        <td className="max-w-[220px] truncate py-2.5 pr-4 text-ink-2">
+                          {s.gemiler ?? "—"}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 text-right text-ink-2">
+                          {formatSayi(g.giris)}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 text-right text-ink-2">
+                          {formatSayi(g.cikis)}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 text-right font-semibold text-ink">
+                          {formatSayi(g.kalan)}
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <DolulukCubugu giris={g.giris} kalan={g.kalan} />
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              s.aktif ? "bg-emerald-50 text-emerald-700" : "bg-page text-muted"
+                            }`}
+                          >
+                            {s.aktif ? "Aktif" : "Pasif"}
+                          </span>
+                        </td>
+                        {duzenleyebilir && (
+                          <td className="py-2.5 text-right">
+                            <button
+                              onClick={() => {
+                                setHata(null);
+                                setForm({
+                                  id: s.depo_id,
+                                  ad: s.ad,
+                                  antrepo: s.antrepo ?? "",
+                                  aktif: s.aktif,
+                                });
+                              }}
+                              className="rounded-lg p-1.5 text-muted transition hover:bg-page hover:text-ink"
+                              aria-label="Düzenle"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>,
+                    ];
+                  }
+
                   const acik = acikGruplar.has(g.ad);
                   return [
                     <tr
@@ -218,9 +272,7 @@ export default function DepolarSayfasi() {
                             key={s.depo_id}
                             className="border-b border-hairline/40 bg-page/40 last:border-0"
                           >
-                            <td className="py-2 pl-9 pr-4 text-ink">
-                              {s.antrepo ?? "(antrepo belirtilmemiş)"}
-                            </td>
+                            <td className="py-2 pl-9 pr-4 text-ink">{s.antrepo ?? "—"}</td>
                             <td className="max-w-[220px] truncate py-2 pr-4 text-ink-2">
                               {s.gemiler ?? "—"}
                             </td>
