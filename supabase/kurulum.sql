@@ -166,6 +166,17 @@ from public.depolar d
 left join public.hareketler h on h.depo_id = d.id
 group by d.id;
 
+create or replace view public.depo_gemi_stok
+with (security_invoker = on) as
+select
+  h.depo_id,
+  coalesce(h.gemi, 'GEMİ BELİRTİLMEMİŞ') as gemi,
+  sum(h.tonaj) as giris,
+  count(*) as giris_sayisi
+from public.hareketler h
+where h.tip = 'giris'
+group by h.depo_id, coalesce(h.gemi, 'GEMİ BELİRTİLMEMİŞ');
+
 create or replace view public.firma_depo_ozet
 with (security_invoker = on) as
 select
