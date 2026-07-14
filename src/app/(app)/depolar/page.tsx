@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, ChevronRight, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { DepoGemiStok, DepoStok } from "@/lib/types";
+import type { DepoGemiStok, DepoStok, FirmaDepoOzet, Siparis } from "@/lib/types";
 import { formatSayi } from "@/lib/format";
 import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
 import { useProfil } from "@/components/AppShell";
@@ -21,18 +21,19 @@ interface DepoGrubu {
   giris: number;
   cikis: number;
   kalan: number;
+  netKalan: number; // açık siparişler düşüldükten sonra kalan
   gemiler: string;
 }
 
-function DolulukCubugu({ giris, kalan }: { giris: number; kalan: number }) {
-  const oran = giris > 0 ? Math.max(0, Math.min(100, (kalan / giris) * 100)) : 0;
+function NetKalanHucre({ deger, kalin = false }: { deger: number; kalin?: boolean }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-hairline">
-        <div className="h-full rounded-full bg-brand" style={{ width: `${oran}%` }} />
-      </div>
-      <span className="tabular text-xs text-muted">%{Math.round(oran)}</span>
-    </div>
+    <span
+      className={`tabular ${kalin ? "font-semibold" : "font-medium"} ${
+        deger < 0 ? "text-red-600" : "text-brand-dark"
+      }`}
+    >
+      {formatSayi(deger)}
+    </span>
   );
 }
 
@@ -49,20 +50,55 @@ export default function DepolarSayfasi() {
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
 
+  const [siparisler, setSiparisler] = useState<Siparis[]>([]);
+  const [firmaOzet, setFirmaOzet] = useState<FirmaDepoOzet[]>([]);
+
   const yenile = useCallback(async () => {
     const supabase = createClient();
-    const [d, g] = await Promise.all([
+    const [d, g, s, o] = await Promise.all([
       supabase.from("depo_stok").select("*").order("ad").order("antrepo"),
       supabase.from("depo_gemi_stok").select("*").order("gemi"),
+      supabase.from("siparisler").select("id, firma_id, depo_id, miktar"),
+      supabase.from("firma_depo_ozet").select("*"),
     ]);
     setStoklar((d.data as DepoStok[]) ?? []);
     setGemiStoklar((g.data as DepoGemiStok[]) ?? []);
+    setSiparisler((s.data as Siparis[]) ?? []);
+    setFirmaOzet((o.data as FirmaDepoOzet[]) ?? []);
     setYukleniyor(false);
   }, []);
 
   useEffect(() => {
     yenile();
   }, [yenile]);
+
+  // Depo bazlı açık sipariş: o depoya bağlanan siparişlerden, aynı firmaya
+  // o depodan yapılmış sevkiyatlar düşülür (genel siparişler depoya bağlanamaz).
+  const acikSiparisMap = useMemo(() => {
+    const sevk = new Map<string, number>(); // "firma|depo" -> sevk edilen
+    for (const o of firmaOzet)
+      sevk.set(`${o.firma_id}|${o.depo_id}`, Number(o.toplam_tonaj));
+
+    const siparis = new Map<string, number>(); // "firma|depo" -> sipariş
+    for (const s of siparisler) {
+      if (!s.depo_id) continue;
+      const k = `${s.firma_id}|${s.depo_id}`;
+      siparis.set(k, (siparis.get(k) ?? 0) + Number(s.miktar));
+    }
+
+    const m = new Map<string, number>(); // depoId -> açık sipariş
+    for (const [k, tutar] of siparis) {
+      const depoId = k.split("|")[1];
+      const acik = Math.max(0, tutar - (sevk.get(k) ?? 0));
+      m.set(depoId, (m.get(depoId) ?? 0) + acik);
+    }
+    return m;
+  }, [siparisler, firmaOzet]);
+
+  const netKalanHesapla = useCallback(
+    (s: DepoStok) => Number(s.kalan_stok) - (acikSiparisMap.get(s.depo_id) ?? 0),
+    [acikSiparisMap]
+  );
 
   const gruplar = useMemo<DepoGrubu[]>(() => {
     const m = new Map<string, DepoStok[]>();
@@ -82,17 +118,19 @@ export default function DepolarSayfasi() {
           giris: alt.reduce((a, s) => a + Number(s.toplam_giris), 0),
           cikis: alt.reduce((a, s) => a + Number(s.toplam_cikis), 0),
           kalan: alt.reduce((a, s) => a + Number(s.kalan_stok), 0),
+          netKalan: alt.reduce((a, s) => a + netKalanHesapla(s), 0),
           gemiler: [...gemiSeti].join(", "),
         };
       })
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr-TR"));
-  }, [stoklar]);
+  }, [stoklar, netKalanHesapla]);
 
   const toplam = useMemo(
     () => ({
       giris: gruplar.reduce((a, g) => a + g.giris, 0),
       cikis: gruplar.reduce((a, g) => a + g.cikis, 0),
       kalan: gruplar.reduce((a, g) => a + g.kalan, 0),
+      netKalan: gruplar.reduce((a, g) => a + g.netKalan, 0),
     }),
     [gruplar]
   );
@@ -205,7 +243,7 @@ export default function DepolarSayfasi() {
                   <th className="pb-2 pr-4 text-right font-medium">Giriş (ton)</th>
                   <th className="pb-2 pr-4 text-right font-medium">Çıkış (ton)</th>
                   <th className="pb-2 pr-4 text-right font-medium">Kalan (ton)</th>
-                  <th className="pb-2 pr-4 font-medium">Doluluk</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Sipariş Sonrası Kalan (ton)</th>
                   <th className="pb-2 pr-4 font-medium">Durum</th>
                   {duzenleyebilir && <th className="pb-2 font-medium"></th>}
                 </tr>
@@ -252,8 +290,8 @@ export default function DepolarSayfasi() {
                         <td className="tabular py-2.5 pr-4 text-right font-semibold text-ink">
                           {formatSayi(g.kalan)}
                         </td>
-                        <td className="py-2.5 pr-4">
-                          <DolulukCubugu giris={g.giris} kalan={g.kalan} />
+                        <td className="py-2.5 pr-4 text-right">
+                          <NetKalanHucre deger={netKalanHesapla(s)} kalin />
                         </td>
                         <td className="py-2.5 pr-4">
                           <span
@@ -321,8 +359,8 @@ export default function DepolarSayfasi() {
                       <td className="tabular py-2.5 pr-4 text-right font-semibold text-ink">
                         {formatSayi(g.kalan)}
                       </td>
-                      <td className="py-2.5 pr-4">
-                        <DolulukCubugu giris={g.giris} kalan={g.kalan} />
+                      <td className="py-2.5 pr-4 text-right">
+                        <NetKalanHucre deger={g.netKalan} kalin />
                       </td>
                       <td className="py-2.5 pr-4">
                         <span className="text-xs text-muted">
@@ -369,11 +407,8 @@ export default function DepolarSayfasi() {
                             <td className="tabular py-2 pr-4 text-right font-medium text-ink">
                               {formatSayi(Number(s.kalan_stok))}
                             </td>
-                            <td className="py-2 pr-4">
-                              <DolulukCubugu
-                                giris={Number(s.toplam_giris)}
-                                kalan={Number(s.kalan_stok)}
-                              />
+                            <td className="py-2 pr-4 text-right">
+                              <NetKalanHucre deger={netKalanHesapla(s)} />
                             </td>
                             <td className="py-2 pr-4">
                               <span
@@ -420,7 +455,10 @@ export default function DepolarSayfasi() {
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.giris)}</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.cikis)}</td>
                   <td className="tabular pt-2.5 pr-4 text-right">{formatSayi(toplam.kalan)}</td>
-                  <td colSpan={duzenleyebilir ? 3 : 2}></td>
+                  <td className="pt-2.5 pr-4 text-right">
+                    <NetKalanHucre deger={toplam.netKalan} kalin />
+                  </td>
+                  <td colSpan={duzenleyebilir ? 2 : 1}></td>
                 </tr>
               </tfoot>
             </table>
