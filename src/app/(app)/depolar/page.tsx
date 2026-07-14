@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, ChevronRight, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { DepoStok } from "@/lib/types";
+import type { DepoGemiStok, DepoStok } from "@/lib/types";
 import { formatSayi } from "@/lib/format";
 import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
 import { useProfil } from "@/components/AppShell";
@@ -41,16 +41,22 @@ export default function DepolarSayfasi() {
   const duzenleyebilir = profil?.rol === "admin" || profil?.rol === "editor";
 
   const [stoklar, setStoklar] = useState<DepoStok[]>([]);
+  const [gemiStoklar, setGemiStoklar] = useState<DepoGemiStok[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [acikGruplar, setAcikGruplar] = useState<Set<string>>(new Set());
+  const [acikDepolar, setAcikDepolar] = useState<Set<string>>(new Set()); // gemi kırılımı açık depolar
   const [form, setForm] = useState<DepoFormVeri | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("depo_stok").select("*").order("ad").order("antrepo");
-    setStoklar((data as DepoStok[]) ?? []);
+    const [d, g] = await Promise.all([
+      supabase.from("depo_stok").select("*").order("ad").order("antrepo"),
+      supabase.from("depo_gemi_stok").select("*").order("gemi"),
+    ]);
+    setStoklar((d.data as DepoStok[]) ?? []);
+    setGemiStoklar((g.data as DepoGemiStok[]) ?? []);
     setYukleniyor(false);
   }, []);
 
@@ -91,6 +97,16 @@ export default function DepolarSayfasi() {
     [gruplar]
   );
 
+  const gemiKirilim = useMemo(() => {
+    const m = new Map<string, DepoGemiStok[]>();
+    for (const g of gemiStoklar) {
+      const liste = m.get(g.depo_id) ?? [];
+      liste.push(g);
+      m.set(g.depo_id, liste);
+    }
+    return m;
+  }, [gemiStoklar]);
+
   function grupToggle(ad: string) {
     setAcikGruplar((eski) => {
       const yeni = new Set(eski);
@@ -98,6 +114,32 @@ export default function DepolarSayfasi() {
       else yeni.add(ad);
       return yeni;
     });
+  }
+
+  function depoToggle(depoId: string) {
+    setAcikDepolar((eski) => {
+      const yeni = new Set(eski);
+      if (yeni.has(depoId)) yeni.delete(depoId);
+      else yeni.add(depoId);
+      return yeni;
+    });
+  }
+
+  // Bir deponun gemi kırılım satırları (en alt seviye)
+  function gemiSatirlari(depoId: string) {
+    const liste = gemiKirilim.get(depoId) ?? [];
+    return liste.map((gs) => (
+      <tr key={depoId + gs.gemi} className="border-b border-hairline/30 bg-accent-soft/50 last:border-0">
+        <td className="py-1.5 pl-14 pr-4 text-xs font-medium text-ink-2">⚓ {gs.gemi}</td>
+        <td className="py-1.5 pr-4 text-right text-xs text-muted">
+          {Number(gs.giris_sayisi)} giriş
+        </td>
+        <td className="tabular py-1.5 pr-4 text-right text-xs font-semibold text-ink">
+          {formatSayi(Number(gs.giris))}
+        </td>
+        <td colSpan={duzenleyebilir ? 5 : 4}></td>
+      </tr>
+    ));
   }
 
   async function kaydet(e: React.FormEvent) {
@@ -174,9 +216,30 @@ export default function DepolarSayfasi() {
                   const duzSatir = g.alt.length === 1 && !g.alt[0].antrepo;
                   if (duzSatir) {
                     const s = g.alt[0];
+                    const kirilimVar = gemiKirilim.has(s.depo_id);
+                    const gemiAcik = acikDepolar.has(s.depo_id);
                     return [
-                      <tr key={g.ad} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
-                        <td className="py-2.5 pl-[26px] pr-4 font-semibold text-ink">{g.ad}</td>
+                      <tr
+                        key={g.ad}
+                        onClick={() => kirilimVar && depoToggle(s.depo_id)}
+                        className={`border-b border-hairline/60 last:border-0 hover:bg-page/60 ${
+                          kirilimVar ? "cursor-pointer" : ""
+                        }`}
+                      >
+                        <td className="py-2.5 pr-4">
+                          <span className="flex items-center gap-1.5 font-semibold text-ink">
+                            {kirilimVar ? (
+                              gemiAcik ? (
+                                <ChevronDown size={15} className="text-muted" />
+                              ) : (
+                                <ChevronRight size={15} className="text-muted" />
+                              )
+                            ) : (
+                              <span className="w-[15px]" />
+                            )}
+                            {g.ad}
+                          </span>
+                        </td>
                         <td className="max-w-[220px] truncate py-2.5 pr-4 text-ink-2">
                           {s.gemiler ?? "—"}
                         </td>
@@ -204,7 +267,8 @@ export default function DepolarSayfasi() {
                         {duzenleyebilir && (
                           <td className="py-2.5 text-right">
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setHata(null);
                                 setForm({
                                   id: s.depo_id,
@@ -221,6 +285,7 @@ export default function DepolarSayfasi() {
                           </td>
                         )}
                       </tr>,
+                      ...(gemiAcik ? gemiSatirlari(s.depo_id) : []),
                     ];
                   }
 
@@ -267,12 +332,31 @@ export default function DepolarSayfasi() {
                       {duzenleyebilir && <td className="py-2.5"></td>}
                     </tr>,
                     ...(acik
-                      ? g.alt.map((s) => (
+                      ? g.alt.flatMap((s) => {
+                          const kirilimVar = gemiKirilim.has(s.depo_id);
+                          const gemiAcik = acikDepolar.has(s.depo_id);
+                          return [
                           <tr
                             key={s.depo_id}
-                            className="border-b border-hairline/40 bg-page/40 last:border-0"
+                            onClick={() => kirilimVar && depoToggle(s.depo_id)}
+                            className={`border-b border-hairline/40 bg-page/40 last:border-0 ${
+                              kirilimVar ? "cursor-pointer hover:bg-page/80" : ""
+                            }`}
                           >
-                            <td className="py-2 pl-9 pr-4 text-ink">{s.antrepo ?? "—"}</td>
+                            <td className="py-2 pl-9 pr-4 text-ink">
+                              <span className="flex items-center gap-1.5">
+                                {kirilimVar ? (
+                                  gemiAcik ? (
+                                    <ChevronDown size={13} className="text-muted" />
+                                  ) : (
+                                    <ChevronRight size={13} className="text-muted" />
+                                  )
+                                ) : (
+                                  <span className="w-[13px]" />
+                                )}
+                                {s.antrepo ?? "—"}
+                              </span>
+                            </td>
                             <td className="max-w-[220px] truncate py-2 pr-4 text-ink-2">
                               {s.gemiler ?? "—"}
                             </td>
@@ -320,8 +404,10 @@ export default function DepolarSayfasi() {
                                 </button>
                               </td>
                             )}
-                          </tr>
-                        ))
+                          </tr>,
+                          ...(gemiAcik ? gemiSatirlari(s.depo_id) : []),
+                          ];
+                        })
                       : []),
                   ];
                 })}

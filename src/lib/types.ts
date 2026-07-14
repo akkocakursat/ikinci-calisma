@@ -66,6 +66,13 @@ export interface FirmaDepoOzet {
   sevkiyat_sayisi: number;
 }
 
+export interface DepoGemiStok {
+  depo_id: string;
+  gemi: string;
+  giris: number;
+  giris_sayisi: number;
+}
+
 export interface Siparis {
   id: string;
   firma_id: string;
