@@ -29,7 +29,7 @@ function NetKalanHucre({ deger, kalin = false }: { deger: number; kalin?: boolea
   return (
     <span
       className={`tabular ${kalin ? "font-semibold" : "font-medium"} ${
-        deger < 0 ? "text-red-600" : "text-brand-dark"
+        deger < 0 ? "text-red-600" : "text-yesil"
       }`}
     >
       {formatSayi(deger)}

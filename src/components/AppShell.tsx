@@ -12,10 +12,10 @@ import {
   BarChart3,
   Users,
   LogOut,
-  Ship,
   Menu,
   X,
 } from "lucide-react";
+import SunarLogo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profil } from "@/lib/types";
 import { RolRozeti } from "@/components/ui";
@@ -77,7 +77,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
               aktif
                 ? "bg-white text-brand-dark shadow-sm"
-                : "text-emerald-50/80 hover:bg-white/10 hover:text-white"
+                : "text-sky-100/80 hover:bg-white/10 hover:text-white"
             }`}
           >
             <Icon size={17} className={aktif ? "text-accent" : undefined} />
@@ -92,7 +92,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
             pathname === "/kullanicilar"
               ? "bg-white text-brand-dark shadow-sm"
-              : "text-emerald-50/80 hover:bg-white/10 hover:text-white"
+              : "text-sky-100/80 hover:bg-white/10 hover:text-white"
           }`}
         >
           <Users size={17} className={pathname === "/kullanicilar" ? "text-accent" : undefined} />
@@ -116,7 +116,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
       <button
         onClick={cikisYap}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-emerald-50/80 transition hover:bg-white/10 hover:text-white"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100/80 transition hover:bg-white/10 hover:text-white"
       >
         <LogOut size={17} />
         Çıkış Yap
@@ -128,14 +128,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <ProfilContext.Provider value={{ profil, yukleniyor }}>
       <div className="flex min-h-screen">
         {/* Masaüstü kenar çubuğu */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-gradient-to-b from-brand-deep via-[#11492a] to-brand-dark p-4 lg:flex">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-gradient-to-b from-brand-deep via-[#0e3a71] to-brand-dark p-4 lg:flex">
           <div className="mb-6 flex items-center gap-3 px-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand-deep shadow-md">
-              <Ship size={18} />
-            </div>
+            <SunarLogo boyut={38} />
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-white">İthal Mısır</p>
-              <p className="text-xs text-emerald-100/70">Sevkiyat ve Stok</p>
+              <p className="text-sm font-semibold text-white">İthal Mısır Takip</p>
+              <p className="text-xs font-medium tracking-[0.2em] text-accent">SUNAR</p>
             </div>
           </div>
           {nav}
@@ -144,15 +142,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Mobil üst çubuk */}
         <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-brand-deep px-4 py-3 lg:hidden">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-brand-deep">
-              <Ship size={16} />
-            </div>
-            <p className="text-sm font-semibold text-white">İthal Mısır Sevkiyat</p>
+          <div className="flex items-center gap-2.5">
+            <SunarLogo boyut={30} />
+            <p className="text-sm font-semibold text-white">
+              İthal Mısır Takip <span className="ml-1 text-xs tracking-[0.18em] text-accent">SUNAR</span>
+            </p>
           </div>
           <button
             onClick={() => setMenuAcik(!menuAcik)}
-            className="rounded-lg p-2 text-emerald-50/90 hover:bg-white/10"
+            className="rounded-lg p-2 text-sky-100/90 hover:bg-white/10"
             aria-label="Menü"
           >
             {menuAcik ? <X size={20} /> : <Menu size={20} />}

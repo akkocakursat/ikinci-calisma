@@ -4,23 +4,23 @@
 
 :root {
   color-scheme: light;
-  /* Grafik renk rolleri (dataviz paleti — yeşil/sarı tema, doğrulanmış) */
+  /* Grafik renk rolleri (dataviz paleti — mavi/yeşil, doğrulanmış) */
   --surface-1: #ffffff;
-  --page: #f6f7f2;
-  --text-primary: #101410;
-  --text-secondary: #4c534c;
-  --text-muted: #848a82;
-  --gridline: #e3e5dd;
-  --baseline: #c6c9c0;
-  --series-1: #008300; /* yeşil */
-  --series-2: #eda100; /* sarı  */
+  --page: #f5f7fa;
+  --text-primary: #0f1420;
+  --text-secondary: #46526b;
+  --text-muted: #8390a6;
+  --gridline: #e2e8f2;
+  --baseline: #c3cddd;
+  --series-1: #2a78d6; /* mavi  */
+  --series-2: #008300; /* yeşil */
 }
 
 html,
 body {
   background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(28, 122, 61, 0.07), transparent 60%),
-    radial-gradient(900px 420px at -10% 108%, rgba(237, 161, 0, 0.06), transparent 60%),
+    radial-gradient(1100px 500px at 85% -10%, rgba(28, 92, 171, 0.08), transparent 60%),
+    radial-gradient(900px 420px at -10% 108%, rgba(237, 161, 0, 0.05), transparent 60%),
     var(--page);
   background-attachment: fixed;
   color: var(--text-primary);
@@ -45,16 +45,27 @@ label {
   @apply mb-1 block text-xs font-medium text-ink-2;
 }
 
-/* ---- Kurumsal tablo stilleri ---- */
+/* ---- Kurumsal tablo stilleri: belirgin satır/sütun çizgileri ---- */
+main table {
+  border-collapse: collapse;
+}
+main table th,
+main table td {
+  border: 1px solid rgba(28, 92, 171, 0.14);
+  padding-left: 0.625rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
 .tablo-baslik {
-  @apply border-b border-brand/15 bg-brand/[0.06] text-left text-[11px] uppercase tracking-wider text-brand-dark;
+  @apply border-b-2 border-brand/30 bg-brand/[0.07] text-left text-[11px] uppercase tracking-wider text-brand-dark;
 }
 .tablo-baslik th {
-  padding-top: 0.55rem;
-  padding-bottom: 0.55rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
 }
 .tablo-toplam {
-  @apply border-t-2 border-brand/25 bg-accent-soft text-sm font-semibold text-ink;
+  @apply border-t-2 border-brand/30 bg-accent-soft text-sm font-semibold text-ink;
 }
 .tablo-toplam td {
   padding-top: 0.6rem;

@@ -182,7 +182,7 @@ export default function SiparisTakip({
                   </td>
                   <td
                     className={`tabular py-2.5 pr-4 text-right font-semibold ${
-                      g.kalan > 0 ? "text-amber-700" : "text-brand-dark"
+                      g.kalan > 0 ? "text-amber-700" : "text-yesil"
                     }`}
                   >
                     {formatSayi(g.kalan)}
@@ -191,7 +191,7 @@ export default function SiparisTakip({
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 w-28 overflow-hidden rounded-full bg-hairline">
                         <div
-                          className={`h-full rounded-full ${oran >= 100 ? "bg-brand" : "bg-accent"}`}
+                          className={`h-full rounded-full ${oran >= 100 ? "bg-yesil" : "bg-accent"}`}
                           style={{ width: `${oran}%` }}
                         />
                       </div>
@@ -200,7 +200,7 @@ export default function SiparisTakip({
                   </td>
                   <td className="py-2.5">
                     {g.kalan <= 0 ? (
-                      <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand-dark">
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
                         ✓ Tamamlandı
                       </span>
                     ) : g.kalan > toplamStok ? (

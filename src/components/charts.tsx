@@ -14,13 +14,13 @@ import {
 } from "recharts";
 import { formatSayi, formatKisa, formatTarih } from "@/lib/format";
 
-// dataviz palet rolleri (yeşil/sarı tema — validator ile doğrulandı)
+// dataviz palet rolleri (mavi/yeşil tema — validator ile doğrulandı)
 export const RENK = {
-  seri1: "#008300", // yeşil
-  seri2: "#eda100", // sarı (yalnızca tablo eşliğindeki çok serili grafikte)
-  grid: "#e3e5dd",
-  eksen: "#c6c9c0",
-  etiket: "#848a82",
+  seri1: "#2a78d6", // mavi
+  seri2: "#008300", // yeşil
+  grid: "#e2e8f2",
+  eksen: "#c3cddd",
+  etiket: "#8390a6",
 };
 
 const EKSEN_YAZI = { fill: RENK.etiket, fontSize: 11 };

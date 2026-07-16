@@ -1,7 +1,7 @@
-# İthal Mısır Sevkiyat ve Stokları
+# İthal Mısır Takip (SUNAR)
 
-Depo bazlı ithal mısır stok ve sevkiyat takip sistemi. Next.js + Supabase + Recharts ile
-hazırlanmıştır; Vercel üzerinde yayınlanmak üzere tasarlanmıştır.
+SUNAR için depo bazlı ithal mısır stok, sevkiyat ve sipariş takip sistemi.
+Next.js + Supabase + Recharts ile hazırlanmıştır; Vercel üzerinde yayınlanır.
 
 **Bağlı veritabanı:** `https://mhqjrvghrhnyzuzeprpx.supabase.co` (Supabase "ikinci-calisma" projesi)
 
