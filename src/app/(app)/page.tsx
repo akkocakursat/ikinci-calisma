@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Boxes, ArrowDownToLine, ArrowUpFromLine, Warehouse, Building2 } from "lucide-react";
+import { Boxes, ArrowUpFromLine, ClipboardList, PackageCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { DepoStok, FirmaDepoOzet, Hareket } from "@/lib/types";
+import type { DepoStok, FirmaDepoOzet, Hareket, Siparis } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { formatSayi, formatTarih } from "@/lib/format";
 import { Card, StatCard, Yukleniyor, BosDurum } from "@/components/ui";
@@ -14,6 +14,7 @@ export default function GenelBakis() {
   const [stoklar, setStoklar] = useState<DepoStok[]>([]);
   const [firmaOzet, setFirmaOzet] = useState<FirmaDepoOzet[]>([]);
   const [sonHareketler, setSonHareketler] = useState<Hareket[]>([]);
+  const [siparisler, setSiparisler] = useState<Siparis[]>([]);
   const [trendHam, setTrendHam] = useState<{ tarih: string; tonaj: number }[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
@@ -35,11 +36,13 @@ export default function GenelBakis() {
         .select("tarih, tonaj")
         .eq("tip", "cikis")
         .gte("tarih", otuzGunOnce),
-    ]).then(([s, f, h, t]) => {
+      supabase.from("siparisler").select("id, firma_id, depo_id, miktar"),
+    ]).then(([s, f, h, t, sip]) => {
       setStoklar((s.data as DepoStok[]) ?? []);
       setFirmaOzet((f.data as FirmaDepoOzet[]) ?? []);
       setSonHareketler((h.data as Hareket[]) ?? []);
       setTrendHam((t.data as { tarih: string; tonaj: number }[]) ?? []);
+      setSiparisler((sip.data as Siparis[]) ?? []);
       setYukleniyor(false);
     });
   }, []);
@@ -47,8 +50,25 @@ export default function GenelBakis() {
   const toplamlar = useMemo(() => {
     const giris = stoklar.reduce((a, s) => a + Number(s.toplam_giris), 0);
     const cikis = stoklar.reduce((a, s) => a + Number(s.toplam_cikis), 0);
-    return { giris, cikis, kalan: giris - cikis };
-  }, [stoklar]);
+
+    // Açık sipariş: firma bazında toplam sipariş − firmanın toplam çektiği (0 altına inmez)
+    const firmaSevk = new Map<string, number>();
+    for (const o of firmaOzet)
+      firmaSevk.set(o.firma_id, (firmaSevk.get(o.firma_id) ?? 0) + Number(o.toplam_tonaj));
+    const firmaSiparis = new Map<string, number>();
+    for (const s of siparisler)
+      firmaSiparis.set(s.firma_id, (firmaSiparis.get(s.firma_id) ?? 0) + Number(s.miktar));
+    let acikSiparis = 0;
+    let bekleyenFirma = 0;
+    for (const [firmaId, siparis] of firmaSiparis) {
+      const acik = Math.max(0, siparis - (firmaSevk.get(firmaId) ?? 0));
+      if (acik > 0) bekleyenFirma++;
+      acikSiparis += acik;
+    }
+
+    const kalan = giris - cikis;
+    return { giris, cikis, kalan, acikSiparis, bekleyenFirma, netKalan: kalan - acikSiparis };
+  }, [stoklar, firmaOzet, siparisler]);
 
   const stokGrafik = useMemo(
     () =>
@@ -85,31 +105,43 @@ export default function GenelBakis() {
       <header className="mb-6">
         <h1 className="text-xl font-semibold text-ink">Genel Bakış</h1>
         <p className="mt-1 text-sm text-muted">
-          İthal mısır stok durumu ve sevkiyat özeti — {formatTarih(new Date().toISOString())}
+          İthal mısır stok durumu ve sevkiyat özeti — {formatTarih(new Date().toISOString())} ·{" "}
+          {stoklar.filter((s) => s.aktif).length} aktif depo · {firmaSayisi} alıcı firma
         </p>
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Kalan Toplam Stok"
+          label="Toplam Mevcut Stok"
           value={`${formatSayi(toplamlar.kalan)} ton`}
+          sub={`toplam giriş: ${formatSayi(toplamlar.giris)} ton`}
           icon={<Boxes size={18} />}
         />
         <StatCard
-          label="Toplam Giriş"
-          value={`${formatSayi(toplamlar.giris)} ton`}
-          icon={<ArrowDownToLine size={18} />}
-        />
-        <StatCard
-          label="Toplam Sevkiyat (Çıkış)"
+          label="Sevkiyatı Yapılan Stok"
           value={`${formatSayi(toplamlar.cikis)} ton`}
+          sub="firmalara teslim edilen toplam"
           icon={<ArrowUpFromLine size={18} />}
         />
         <StatCard
-          label="Aktif Depo / Alıcı Firma"
-          value={`${stoklar.filter((s) => s.aktif).length} / ${firmaSayisi}`}
-          sub="depo / firma"
-          icon={<Warehouse size={18} />}
+          label="Siparişi Açık Stok"
+          value={`${formatSayi(toplamlar.acikSiparis)} ton`}
+          sub={
+            toplamlar.bekleyenFirma
+              ? `${toplamlar.bekleyenFirma} firmanın bekleyen siparişi`
+              : "bekleyen sipariş yok"
+          }
+          icon={<ClipboardList size={18} />}
+        />
+        <StatCard
+          label="Sipariş Dahil Kalan Stok"
+          value={`${formatSayi(toplamlar.netKalan)} ton`}
+          sub={
+            toplamlar.netKalan < 0
+              ? "⚠ taahhüt, mevcut stoğu aşıyor!"
+              : "açık siparişler düşülmüş serbest stok"
+          }
+          icon={<PackageCheck size={18} />}
         />
       </div>
 
