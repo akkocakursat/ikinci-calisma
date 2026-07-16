@@ -4,26 +4,28 @@
 
 :root {
   color-scheme: light;
-  /* Grafik renk rolleri (dataviz paleti — mavi/yeşil, doğrulanmış) */
+  /* Grafik renk rolleri (dataviz paleti — yeşil/amber, doğrulanmış) */
   --surface-1: #ffffff;
-  --page: #f5f7fa;
-  --text-primary: #0f1420;
-  --text-secondary: #46526b;
-  --text-muted: #8390a6;
-  --gridline: #e2e8f2;
-  --baseline: #c3cddd;
-  --series-1: #2a78d6; /* mavi  */
-  --series-2: #008300; /* yeşil */
+  --page: #f4f5f1;
+  --text-primary: #161a17;
+  --text-secondary: #4d5651;
+  --text-muted: #8b938c;
+  --gridline: #e7e9e2;
+  --baseline: #cfd3ca;
+  --series-1: #008300; /* yeşil */
+  --series-2: #eda100; /* amber */
 }
 
 html,
 body {
-  background:
-    radial-gradient(1100px 500px at 85% -10%, rgba(28, 92, 171, 0.08), transparent 60%),
-    radial-gradient(900px 420px at -10% 108%, rgba(237, 161, 0, 0.05), transparent 60%),
-    var(--page);
-  background-attachment: fixed;
+  background: var(--page);
   color: var(--text-primary);
+}
+
+/* Sayfa başlıkları ve büyük rakamlar için zarif serif */
+main h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.01em;
 }
 
 /* Sayı sütunlarının dikey hizalanması için */
@@ -38,36 +40,36 @@ input[type="email"],
 input[type="password"],
 select,
 textarea {
-  @apply w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20;
+  @apply w-full rounded-xl border border-hairline bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15;
 }
 
 label {
   @apply mb-1 block text-xs font-medium text-ink-2;
 }
 
-/* ---- Kurumsal tablo stilleri: belirgin satır/sütun çizgileri ---- */
+/* ---- Kurumsal tablo stilleri: belirgin ama zarif çizgiler ---- */
 main table {
   border-collapse: collapse;
 }
 main table th,
 main table td {
-  border: 1px solid rgba(28, 92, 171, 0.14);
-  padding-left: 0.625rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  border: 1px solid rgba(22, 58, 38, 0.1);
+  padding-left: 0.7rem;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
 }
 
 .tablo-baslik {
-  @apply border-b-2 border-brand/30 bg-brand/[0.07] text-left text-[11px] uppercase tracking-wider text-brand-dark;
+  @apply border-b-2 border-brand/25 bg-[#eef1ea] text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2;
 }
 .tablo-baslik th {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }
 .tablo-toplam {
-  @apply border-t-2 border-brand/30 bg-accent-soft text-sm font-semibold text-ink;
+  @apply border-t-2 border-accent/60 bg-accent-soft text-sm font-semibold text-ink;
 }
 .tablo-toplam td {
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }

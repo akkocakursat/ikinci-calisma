@@ -6,23 +6,24 @@ const config: Config = {
     extend: {
       colors: {
         surface: "#ffffff",
-        page: "#f5f7fa",
-        ink: "#0f1420",
-        "ink-2": "#46526b",
-        muted: "#8390a6",
-        hairline: "#d9e2ef",
-        brand: "#1c5cab", // kurumsal mavi
-        "brand-dark": "#104281",
-        "brand-deep": "#0b2f5c", // kenar çubuğu koyu mavisi
-        accent: "#eda100", // sarı vurgu (SUNAR güneşi)
-        "accent-soft": "#fdf4dd",
-        yesil: "#1c7a3d", // olumlu/başarı vurgusu
+        page: "#f4f5f1",
+        ink: "#161a17",
+        "ink-2": "#4d5651",
+        muted: "#8b938c",
+        hairline: "#e4e6df",
+        brand: "#189a4d", // canlı kurumsal yeşil
+        "brand-dark": "#12793c",
+        "brand-deep": "#0c2919", // kenar çubuğu koyu orman yeşili
+        accent: "#e7b93c", // amber vurgu
+        "accent-soft": "#faf3dc",
+        yesil: "#12793c",
       },
       fontFamily: {
         sans: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        baslik: ["Georgia", "'Times New Roman'", "serif"],
       },
       boxShadow: {
-        kart: "0 1px 2px rgba(11,47,92,0.06), 0 4px 18px rgba(11,47,92,0.07)",
+        kart: "0 1px 2px rgba(22,26,23,0.04), 0 8px 24px rgba(22,26,23,0.06)",
       },
     },
   },

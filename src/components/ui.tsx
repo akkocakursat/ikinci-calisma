@@ -41,15 +41,15 @@ export function StatCard({
   return (
     <div className="rounded-2xl border border-hairline bg-surface p-5 shadow-kart">
       <div className="flex items-start justify-between">
-        <p className="text-xs font-medium text-ink-2">{label}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
         {icon && (
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand-dark">
             {icon}
           </span>
         )}
       </div>
-      <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
-      {sub && <p className="mt-1 text-xs text-muted">{sub}</p>}
+      <p className="font-baslik mt-2.5 text-[27px] font-bold leading-none text-ink">{value}</p>
+      {sub && <p className="mt-2 text-xs text-muted">{sub}</p>}
     </div>
   );
 }
