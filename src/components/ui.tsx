@@ -91,11 +91,13 @@ export function Modal({
   baslik,
   kapat,
   children,
+  genis = false,
 }: {
   acik: boolean;
   baslik: string;
   kapat: () => void;
   children: React.ReactNode;
+  genis?: boolean;
 }) {
   if (!acik) return null;
   return (
@@ -104,7 +106,9 @@ export function Modal({
       onClick={kapat}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-hairline bg-surface p-6 shadow-xl"
+        className={`max-h-[90vh] w-full overflow-y-auto rounded-2xl border border-hairline bg-surface p-6 shadow-xl ${
+          genis ? "max-w-4xl" : "max-w-md"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Download, Pencil, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Download, FileSpreadsheet, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Depo, Firma, Hareket, HareketTipi } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
@@ -10,6 +10,7 @@ import { csvIndir } from "@/lib/csv";
 import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
 import { useProfil } from "@/components/AppShell";
 import HareketForm from "@/components/HareketForm";
+import ExcelIceAktar from "@/components/ExcelIceAktar";
 
 export default function HareketlerSayfasi() {
   const { profil } = useProfil();
@@ -31,6 +32,7 @@ export default function HareketlerSayfasi() {
   // modal durumu
   const [modalTip, setModalTip] = useState<HareketTipi | null>(null);
   const [duzenlenen, setDuzenlenen] = useState<Hareket | null>(null);
+  const [excelModal, setExcelModal] = useState(false);
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
@@ -116,6 +118,9 @@ export default function HareketlerSayfasi() {
           </Buton>
           {duzenleyebilir && (
             <>
+              <Buton tur="ikincil" onClick={() => setExcelModal(true)}>
+                <FileSpreadsheet size={15} /> Excel&apos;den Yükle
+              </Buton>
               <Buton tur="ikincil" onClick={() => { setDuzenlenen(null); setModalTip("giris"); }}>
                 <ArrowDownToLine size={15} /> Stok Girişi
               </Buton>
@@ -254,6 +259,20 @@ export default function HareketlerSayfasi() {
           <BosDurum mesaj="Filtrelere uyan kayıt bulunamadı." />
         )}
       </Card>
+
+      <Modal
+        acik={excelModal}
+        baslik="Excel'den Toplu Sevkiyat Yükle"
+        kapat={() => setExcelModal(false)}
+        genis
+      >
+        <ExcelIceAktar
+          depolar={depolar.filter((d) => d.aktif)}
+          firmalar={firmalar}
+          hareketler={hareketler}
+          tamamlandi={yenile}
+        />
+      </Modal>
 
       <Modal
         acik={modalTip !== null}
