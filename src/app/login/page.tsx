@@ -32,11 +32,10 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-page px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex justify-center drop-shadow-lg">
-            <SunarLogo boyut={60} />
+          <div className="mx-auto mb-4 flex justify-center">
+            <SunarLogo yukseklik={48} />
           </div>
-          <p className="text-xs font-semibold tracking-[0.3em] text-brand">SUNAR</p>
-          <h1 className="mt-1 text-xl font-semibold text-ink">İthal Mısır Takip</h1>
+          <h1 className="text-xl font-semibold text-ink">İthal Mısır Takip</h1>
           <p className="mt-1 text-sm text-muted">Devam etmek için hesabınızla giriş yapın</p>
         </div>
 

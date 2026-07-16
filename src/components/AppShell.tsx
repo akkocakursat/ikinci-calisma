@@ -129,12 +129,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         {/* Masaüstü kenar çubuğu */}
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-gradient-to-b from-brand-deep via-[#0e3a71] to-brand-dark p-4 lg:flex">
-          <div className="mb-6 flex items-center gap-3 px-1">
-            <SunarLogo boyut={38} />
-            <div className="leading-tight">
-              <p className="text-sm font-semibold text-white">İthal Mısır Takip</p>
-              <p className="text-xs font-medium tracking-[0.2em] text-accent">SUNAR</p>
-            </div>
+          <div className="mb-6 rounded-xl bg-white px-3.5 pb-2.5 pt-3 shadow-md">
+            <SunarLogo yukseklik={26} />
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark">
+              İthal Mısır Takip
+            </p>
           </div>
           {nav}
           {altBilgi}
@@ -143,10 +142,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobil üst çubuk */}
         <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-brand-deep px-4 py-3 lg:hidden">
           <div className="flex items-center gap-2.5">
-            <SunarLogo boyut={30} />
-            <p className="text-sm font-semibold text-white">
-              İthal Mısır Takip <span className="ml-1 text-xs tracking-[0.18em] text-accent">SUNAR</span>
-            </p>
+            <span className="flex items-center rounded-lg bg-white px-2 py-1.5">
+              <SunarLogo yukseklik={17} />
+            </span>
+            <p className="text-sm font-semibold text-white">İthal Mısır Takip</p>
           </div>
           <button
             onClick={() => setMenuAcik(!menuAcik)}
