@@ -10,6 +10,7 @@ import {
   Warehouse,
   Building2,
   BarChart3,
+  History,
   Users,
   LogOut,
   Menu,
@@ -36,6 +37,7 @@ const NAV = [
   { href: "/depolar", ad: "Depolar", Icon: Warehouse },
   { href: "/firmalar", ad: "Firmalar", Icon: Building2 },
   { href: "/raporlar", ad: "Raporlar", Icon: BarChart3 },
+  { href: "/islem-gecmisi", ad: "İşlem Geçmişi", Icon: History },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

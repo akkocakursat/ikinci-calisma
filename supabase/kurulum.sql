@@ -282,6 +282,14 @@ create policy "hareketler_delete" on public.hareketler
 -- Depolar hazır liste ile OLUŞTURULMAZ; kullanıcı sitedeki
 -- "Depolar > Yeni Depo / Antrepo" ekranından kendisi ekler.
 
+-- ------------------------------------------------------------
+-- 8) İŞLEM GEÇMİŞİ (denetim kaydı)
+--    Tüm ekleme/güncelleme/silme işlemleri tetikleyiciyle
+--    otomatik loglanır; loglar değiştirilemez/silinemez.
+--    (Canlı projeye "islem_gecmisi" migration'ı ile uygulandı;
+--    yeniden kurulumda o migration içeriği de çalıştırılmalıdır.)
+-- ------------------------------------------------------------
+
 -- KURULUM TAMAM ✔
 -- Sıradaki adım: Supabase Dashboard > Authentication > Users >
 -- "Add user" ile kullanıcıları e-posta + şifre ile ekleyin.

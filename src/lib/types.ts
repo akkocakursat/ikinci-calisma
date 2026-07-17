@@ -74,6 +74,18 @@ export interface DepoGemiStok {
   giris_sayisi: number;
 }
 
+export interface IslemGecmisi {
+  id: string;
+  tablo: string;
+  islem: "ekleme" | "guncelleme" | "silme";
+  kayit_id: string | null;
+  ozet: string | null;
+  detay: Record<string, unknown> | null;
+  kullanici_id: string | null;
+  kullanici_email: string | null;
+  created_at: string;
+}
+
 export interface Siparis {
   id: string;
   firma_id: string;
