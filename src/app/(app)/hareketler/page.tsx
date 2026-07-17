@@ -7,6 +7,7 @@ import type { Depo, Firma, Hareket, HareketTipi } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { formatSayi, formatTarih } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
+import { xlsxIndir } from "@/lib/xlsx";
 import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
 import { useProfil } from "@/components/AppShell";
 import HareketForm from "@/components/HareketForm";
@@ -87,8 +88,8 @@ export default function HareketlerSayfasi() {
     else yenile();
   }
 
-  function disaAktar() {
-    csvIndir(`stok-hareketleri-${new Date().toISOString().slice(0, 10)}.csv`, [
+  function aktarimSatirlari() {
+    return [
       ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Plaka", "Tonaj", "Açıklama"],
       ...filtreli.map((h) => [
         formatTarih(h.tarih),
@@ -101,6 +102,16 @@ export default function HareketlerSayfasi() {
         Number(h.tonaj),
         h.aciklama ?? "",
       ]),
+    ];
+  }
+
+  function disaAktar() {
+    csvIndir(`stok-hareketleri-${new Date().toISOString().slice(0, 10)}.csv`, aktarimSatirlari());
+  }
+
+  function excelAktar() {
+    xlsxIndir(`stok-hareketleri-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      { ad: "Stok Hareketleri", satirlar: aktarimSatirlari() },
     ]);
   }
 
@@ -114,6 +125,9 @@ export default function HareketlerSayfasi() {
           <p className="mt-1 text-sm text-muted">Depo giriş ve firma sevkiyat kayıtları</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Buton tur="ikincil" onClick={excelAktar}>
+            <FileSpreadsheet size={15} /> Excel İndir
+          </Buton>
           <Buton tur="ikincil" onClick={disaAktar}>
             <Download size={15} /> CSV İndir
           </Buton>

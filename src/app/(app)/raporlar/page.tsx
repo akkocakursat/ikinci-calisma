@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { DepoStok, FirmaDepoOzet, Siparis } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { formatSayi } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
+import { xlsxIndir } from "@/lib/xlsx";
 import { Card, Buton, Yukleniyor, BosDurum } from "@/components/ui";
 import { GirisCikisBar } from "@/components/charts";
 import SiparisTakip from "@/components/SiparisTakip";
@@ -119,15 +120,55 @@ export default function RaporlarSayfasi() {
     ]);
   }
 
+  function tumRaporuExcelAktar() {
+    xlsxIndir(`ithal-misir-rapor-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      {
+        ad: "Firma x Depo",
+        satirlar: [
+          ["Firma", ...pivot.depolar.map((d) => d.etiket), "FİRMA TOPLAMI"],
+          ...pivot.firmalar.map((f) => [
+            f.ad,
+            ...pivot.depolar.map((d) => f.hucre.get(d.id) ?? 0),
+            f.toplam,
+          ]),
+          [
+            "DEPO TOPLAMI",
+            ...pivot.depolar.map((d) => pivot.depoToplam.get(d.id) ?? 0),
+            pivot.genelToplam,
+          ],
+        ],
+      },
+      {
+        ad: "Depo Stok Özeti",
+        satirlar: [
+          ["Depo", "Antrepo", "Toplam Giriş (ton)", "Toplam Çıkış (ton)", "Kalan Stok (ton)"],
+          ...stoklar.map((s) => [
+            s.ad,
+            s.antrepo ?? "",
+            Number(s.toplam_giris),
+            Number(s.toplam_cikis),
+            Number(s.kalan_stok),
+          ]),
+          ["GENEL TOPLAM", "", stokToplam.giris, stokToplam.cikis, stokToplam.kalan],
+        ],
+      },
+    ]);
+  }
+
   if (yukleniyor) return <Yukleniyor />;
 
   return (
     <div className="mx-auto max-w-6xl">
-      <header className="mb-6">
-        <h1 className="text-xl font-semibold text-ink">Raporlar</h1>
-        <p className="mt-1 text-sm text-muted">
-          Firma – depo bazlı sevkiyat dağılımı, alt toplamlar ve genel toplamlar
-        </p>
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Raporlar</h1>
+          <p className="mt-1 text-sm text-muted">
+            Firma – depo bazlı sevkiyat dağılımı, alt toplamlar ve genel toplamlar
+          </p>
+        </div>
+        <Buton tur="ikincil" onClick={tumRaporuExcelAktar} disabled={!stoklar.length}>
+          <FileSpreadsheet size={15} /> Tüm Raporu Excel İndir
+        </Buton>
       </header>
 
       <Card title="Sipariş Takibi — Firma Bazlı Sipariş / Teslimat Durumu (ton)" className="mb-6">

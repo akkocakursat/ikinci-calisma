@@ -119,6 +119,7 @@ create table if not exists public.siparisler (
   depo_id uuid references public.depolar(id) on delete restrict, -- boş = genel sipariş
   miktar numeric(12,3) not null check (miktar > 0),
   tarih date not null default current_date,
+  termin date, -- son teslim tarihi (uyarılar için)
   aciklama text,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()

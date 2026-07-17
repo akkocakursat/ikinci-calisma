@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { Download } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 import type { DepoStok, FirmaDepoOzet, Siparis } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
-import { formatSayi } from "@/lib/format";
+import { bugunISO, formatSayi, formatTarih } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
+import { xlsxIndir } from "@/lib/xlsx";
 import { Buton, BosDurum } from "@/components/ui";
 
 interface DepoSatiri {
@@ -24,6 +25,18 @@ interface FirmaGrubu {
   siparis: number; // firmanın toplam siparişi (genel + depoya bağlı)
   sevk: number; // firmanın TÜM depolardan çektiği toplam
   kalan: number; // açık sipariş
+  termin: string | null; // en erken termin tarihi
+}
+
+type TerminDurumu = "gecikti" | "yaklasiyor" | null;
+
+function terminDurumu(termin: string | null, kalan: number): TerminDurumu {
+  if (!termin || kalan <= 0) return null;
+  const bugun = bugunISO();
+  if (termin < bugun) return "gecikti";
+  const yediGunSonra = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  if (termin <= yediGunSonra) return "yaklasiyor";
+  return null;
 }
 
 export default function SiparisTakip({
@@ -59,14 +72,16 @@ export default function SiparisTakip({
     // firmanın siparişleri (depoya bağlı + genel)
     const firmaMap = new Map<
       string,
-      { firma: string; depoSiparis: Map<string, number>; genelSiparis: number }
+      { firma: string; depoSiparis: Map<string, number>; genelSiparis: number; termin: string | null }
     >();
     for (const s of siparisler) {
       const f = firmaMap.get(s.firma_id) ?? {
         firma: s.firma?.ad ?? "?",
         depoSiparis: new Map<string, number>(),
         genelSiparis: 0,
+        termin: null,
       };
+      if (s.termin && (!f.termin || s.termin < f.termin)) f.termin = s.termin;
       if (s.depo_id) {
         f.depoSiparis.set(s.depo_id, (f.depoSiparis.get(s.depo_id) ?? 0) + Number(s.miktar));
         if (s.depo && !depoEtiketleri.has(s.depo_id))
@@ -114,6 +129,7 @@ export default function SiparisTakip({
         siparis,
         sevk,
         kalan: Math.max(0, siparis - sevk),
+        termin: f.termin,
       };
     });
 
@@ -128,14 +144,22 @@ export default function SiparisTakip({
     return { gruplar, genel, toplamStok };
   }, [siparisler, ozet, stoklar]);
 
-  function disaAktar() {
-    csvIndir(`siparis-takip-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["FİRMA ÖZETİ"],
-      ["Firma", "Toplam Sipariş (ton)", "Sevk Edilen (ton)", "Açık / Kalan (ton)"],
-      ...gruplar.map((g) => [g.firma, g.siparis, g.sevk, g.kalan]),
-      ["GENEL TOPLAM", genel.siparis, genel.sevk, genel.kalan],
-      [],
-      ["DEPO BAZLI DETAY"],
+  function ozetSatirlari() {
+    return [
+      ["Firma", "Toplam Sipariş (ton)", "Sevk Edilen (ton)", "Açık / Kalan (ton)", "Termin"],
+      ...gruplar.map((g) => [
+        g.firma,
+        g.siparis,
+        g.sevk,
+        g.kalan,
+        g.termin ? formatTarih(g.termin) : "",
+      ]),
+      ["GENEL TOPLAM", genel.siparis, genel.sevk, genel.kalan, ""],
+    ];
+  }
+
+  function detaySatirlari() {
+    return [
       ["Firma", "Depo", "Bağlı Sipariş (ton)", "Bu Depodan Sevk (ton)", "Depoda Kalan Stok (ton)"],
       ...gruplar.flatMap((g) =>
         g.satirlar.map((s) => [
@@ -146,6 +170,23 @@ export default function SiparisTakip({
           s.depoKalan ?? "",
         ])
       ),
+    ];
+  }
+
+  function disaAktar() {
+    csvIndir(`siparis-takip-${new Date().toISOString().slice(0, 10)}.csv`, [
+      ["FİRMA ÖZETİ"],
+      ...ozetSatirlari(),
+      [],
+      ["DEPO BAZLI DETAY"],
+      ...detaySatirlari(),
+    ]);
+  }
+
+  function excelAktar() {
+    xlsxIndir(`siparis-takip-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      { ad: "Firma Özeti", satirlar: ozetSatirlari() },
+      { ad: "Depo Bazlı Detay", satirlar: detaySatirlari() },
     ]);
   }
 
@@ -163,6 +204,7 @@ export default function SiparisTakip({
               <th className="pr-4 text-right">Toplam Sipariş (ton)</th>
               <th className="pr-4 text-right">Sevk Edilen (ton)</th>
               <th className="pr-4 text-right">Açık / Kalan (ton)</th>
+              <th className="pr-4">Termin</th>
               <th className="pr-4">Tamamlanma</th>
               <th>Durum</th>
             </tr>
@@ -171,6 +213,7 @@ export default function SiparisTakip({
             {gruplar.map((g) => {
               const oran =
                 g.siparis > 0 ? Math.max(0, Math.min(100, (g.sevk / g.siparis) * 100)) : 0;
+              const tDurum = terminDurumu(g.termin, g.kalan);
               return (
                 <tr key={g.firmaId} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                   <td className="py-2.5 pr-4 font-medium text-ink">{g.firma}</td>
@@ -186,6 +229,17 @@ export default function SiparisTakip({
                     }`}
                   >
                     {formatSayi(g.kalan)}
+                  </td>
+                  <td
+                    className={`whitespace-nowrap py-2.5 pr-4 ${
+                      tDurum === "gecikti"
+                        ? "font-semibold text-red-600"
+                        : tDurum === "yaklasiyor"
+                          ? "font-semibold text-amber-700"
+                          : "text-ink-2"
+                    }`}
+                  >
+                    {g.termin ? formatTarih(g.termin) : "—"}
                   </td>
                   <td className="py-2.5 pr-4">
                     <div className="flex items-center gap-2">
@@ -203,9 +257,17 @@ export default function SiparisTakip({
                       <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
                         ✓ Tamamlandı
                       </span>
+                    ) : tDurum === "gecikti" ? (
+                      <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                        ⏰ Termin geçti
+                      </span>
                     ) : g.kalan > toplamStok ? (
                       <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
                         ⚠ Stok yetersiz
+                      </span>
+                    ) : tDurum === "yaklasiyor" ? (
+                      <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                        ⏰ Termin yaklaşıyor
                       </span>
                     ) : (
                       <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-amber-800">
@@ -223,7 +285,7 @@ export default function SiparisTakip({
               <td className="tabular pr-4 text-right">{formatSayi(genel.siparis)}</td>
               <td className="tabular pr-4 text-right">{formatSayi(genel.sevk)}</td>
               <td className="tabular pr-4 text-right text-brand-dark">{formatSayi(genel.kalan)}</td>
-              <td colSpan={2}></td>
+              <td colSpan={3}></td>
             </tr>
           </tfoot>
         </table>
@@ -234,9 +296,14 @@ export default function SiparisTakip({
         <p className="text-xs font-semibold uppercase tracking-wider text-muted">
           Depo Bazlı Detay — sipariş bağlantısı ve fiili çekişler
         </p>
-        <Buton tur="ikincil" onClick={disaAktar}>
-          <Download size={15} /> CSV İndir
-        </Buton>
+        <span className="flex gap-2">
+          <Buton tur="ikincil" onClick={excelAktar}>
+            <FileSpreadsheet size={15} /> Excel İndir
+          </Buton>
+          <Buton tur="ikincil" onClick={disaAktar}>
+            <Download size={15} /> CSV İndir
+          </Buton>
+        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

@@ -32,6 +32,7 @@ export default function SiparislerSayfasi() {
   const [depoId, setDepoId] = useState("");
   const [miktar, setMiktar] = useState("");
   const [tarih, setTarih] = useState(bugunISO());
+  const [termin, setTermin] = useState("");
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
@@ -70,6 +71,7 @@ export default function SiparislerSayfasi() {
     setDepoId(s?.depo_id ?? "");
     setMiktar(s ? String(s.miktar) : "");
     setTarih(s?.tarih ?? bugunISO());
+    setTermin(s?.termin ?? "");
     setAciklama(s?.aciklama ?? "");
     setHata(null);
     setMukerrerUyarisi(null);
@@ -132,6 +134,7 @@ export default function SiparislerSayfasi() {
       depo_id: depoId || null, // boş = genel sipariş, her depodan düşülür
       miktar: miktarSayi,
       tarih,
+      termin: termin || null,
       aciklama: aciklama.trim() || null,
     };
 
@@ -189,6 +192,7 @@ export default function SiparislerSayfasi() {
               <thead>
                 <tr className="tablo-baslik">
                   <th className="pr-4">Tarih</th>
+                  <th className="pr-4">Termin</th>
                   <th className="pr-4">Firma</th>
                   <th className="pr-4">Depo</th>
                   <th className="pr-4 text-right">Miktar (ton)</th>
@@ -200,6 +204,15 @@ export default function SiparislerSayfasi() {
                 {siparisler.map((s) => (
                   <tr key={s.id} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                     <td className="py-2.5 pr-4 text-ink-2">{formatTarih(s.tarih)}</td>
+                    <td
+                      className={`py-2.5 pr-4 ${
+                        s.termin && s.termin < bugunISO()
+                          ? "font-semibold text-red-600"
+                          : "text-ink-2"
+                      }`}
+                    >
+                      {s.termin ? formatTarih(s.termin) : "—"}
+                    </td>
                     <td className="py-2.5 pr-4 font-medium text-ink">{s.firma?.ad ?? "—"}</td>
                     <td className="py-2.5 pr-4 text-ink">
                       {s.depo ? depoTamAd(s.depo) : <span className="italic text-muted">GENEL</span>}
@@ -313,7 +326,7 @@ export default function SiparislerSayfasi() {
               />
             </div>
             <div>
-              <label htmlFor="sipTarih">Tarih</label>
+              <label htmlFor="sipTarih">Sipariş Tarihi</label>
               <input
                 id="sipTarih"
                 type="date"
@@ -322,6 +335,19 @@ export default function SiparislerSayfasi() {
                 required
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="sipTermin">Termin — Son Teslim Tarihi (isteğe bağlı)</label>
+            <input
+              id="sipTermin"
+              type="date"
+              value={termin}
+              onChange={(e) => setTermin(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted">
+              Doldurursanız termini geçen veya yaklaşan açık siparişler panelde uyarıyla gösterilir.
+            </p>
           </div>
 
           <div>

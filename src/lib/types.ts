@@ -92,6 +92,7 @@ export interface Siparis {
   depo_id: string | null; // boş = genel sipariş (hangi depodan çekileceği belli değil)
   miktar: number;
   tarih: string;
+  termin: string | null; // son teslim tarihi
   aciklama: string | null;
   created_by: string | null;
   created_at: string;

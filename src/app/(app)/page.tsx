@@ -36,7 +36,7 @@ export default function GenelBakis() {
         .select("tarih, tonaj")
         .eq("tip", "cikis")
         .gte("tarih", otuzGunOnce),
-      supabase.from("siparisler").select("id, firma_id, depo_id, miktar"),
+      supabase.from("siparisler").select("id, firma_id, depo_id, miktar, termin"),
     ]).then(([s, f, h, t, sip]) => {
       setStoklar((s.data as DepoStok[]) ?? []);
       setFirmaOzet((f.data as FirmaDepoOzet[]) ?? []);
@@ -56,18 +56,38 @@ export default function GenelBakis() {
     for (const o of firmaOzet)
       firmaSevk.set(o.firma_id, (firmaSevk.get(o.firma_id) ?? 0) + Number(o.toplam_tonaj));
     const firmaSiparis = new Map<string, number>();
-    for (const s of siparisler)
+    const firmaTermin = new Map<string, string>(); // firma -> en erken termin
+    for (const s of siparisler) {
       firmaSiparis.set(s.firma_id, (firmaSiparis.get(s.firma_id) ?? 0) + Number(s.miktar));
+      if (s.termin) {
+        const mevcut = firmaTermin.get(s.firma_id);
+        if (!mevcut || s.termin < mevcut) firmaTermin.set(s.firma_id, s.termin);
+      }
+    }
+    const bugun = new Date().toISOString().slice(0, 10);
     let acikSiparis = 0;
     let bekleyenFirma = 0;
+    let gecikenFirma = 0;
     for (const [firmaId, siparis] of firmaSiparis) {
       const acik = Math.max(0, siparis - (firmaSevk.get(firmaId) ?? 0));
-      if (acik > 0) bekleyenFirma++;
+      if (acik > 0) {
+        bekleyenFirma++;
+        const termin = firmaTermin.get(firmaId);
+        if (termin && termin < bugun) gecikenFirma++;
+      }
       acikSiparis += acik;
     }
 
     const kalan = giris - cikis;
-    return { giris, cikis, kalan, acikSiparis, bekleyenFirma, netKalan: kalan - acikSiparis };
+    return {
+      giris,
+      cikis,
+      kalan,
+      acikSiparis,
+      bekleyenFirma,
+      gecikenFirma,
+      netKalan: kalan - acikSiparis,
+    };
   }, [stoklar, firmaOzet, siparisler]);
 
   const stokGrafik = useMemo(
@@ -109,6 +129,16 @@ export default function GenelBakis() {
           {stoklar.filter((s) => s.aktif).length} aktif depo · {firmaSayisi} alıcı firma
         </p>
       </header>
+
+      {toplamlar.gecikenFirma > 0 && (
+        <Link
+          href="/siparisler"
+          className="mb-4 block rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 transition hover:bg-red-100"
+        >
+          ⏰ <b>{toplamlar.gecikenFirma} firmanın termin tarihi geçmiş açık siparişi var.</b>{" "}
+          Detay için tıklayın →
+        </Link>
+      )}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
