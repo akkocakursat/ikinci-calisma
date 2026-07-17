@@ -97,7 +97,8 @@ create table if not exists public.hareketler (
   tip text not null check (tip in ('giris', 'cikis')),
   tonaj numeric(12,3) not null check (tonaj > 0),
   tarih date not null default current_date,
-  gemi text, -- stok girişinde ürünün geldiği gemi
+  gemi text, -- ürünün geldiği/ait olduğu gemi
+  plaka text, -- araç plakası
   aciklama text,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),

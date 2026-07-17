@@ -38,6 +38,7 @@ export interface Hareket {
   tonaj: number;
   tarih: string;
   gemi: string | null;
+  plaka: string | null;
   aciklama: string | null;
   created_by: string | null;
   created_at: string;

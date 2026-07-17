@@ -26,6 +26,7 @@ export default function HareketForm({
   const [yeniFirmaModu, setYeniFirmaModu] = useState(false);
   const [tonaj, setTonaj] = useState(duzenlenen ? String(duzenlenen.tonaj) : "");
   const [gemi, setGemi] = useState(duzenlenen?.gemi ?? "");
+  const [plaka, setPlaka] = useState(duzenlenen?.plaka ?? "");
   const [tarih, setTarih] = useState(duzenlenen?.tarih ?? bugunISO());
   const [aciklama, setAciklama] = useState(duzenlenen?.aciklama ?? "");
   const [hata, setHata] = useState<string | null>(null);
@@ -96,7 +97,8 @@ export default function HareketForm({
       tip,
       tonaj: tonajSayi,
       tarih,
-      gemi: tip === "giris" ? gemi.trim().toLocaleUpperCase("tr-TR") || null : null,
+      gemi: gemi.trim().toLocaleUpperCase("tr-TR") || null,
+      plaka: plaka.trim().toLocaleUpperCase("tr-TR") || null,
       aciklama: aciklama.trim() || null,
     };
 
@@ -188,7 +190,7 @@ export default function HareketForm({
         </div>
       </div>
 
-      {tip === "giris" && (
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor="gemi">Gemi Adı (isteğe bağlı)</label>
           <input
@@ -199,7 +201,30 @@ export default function HareketForm({
             placeholder="örn. NEW SHAIM"
           />
         </div>
-      )}
+        {tip === "cikis" ? (
+          <div>
+            <label htmlFor="plaka">Araç Plakası (isteğe bağlı)</label>
+            <input
+              id="plaka"
+              type="text"
+              value={plaka}
+              onChange={(e) => setPlaka(e.target.value)}
+              placeholder="örn. 31 ABC 123"
+            />
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="plaka">Plaka (isteğe bağlı)</label>
+            <input
+              id="plaka"
+              type="text"
+              value={plaka}
+              onChange={(e) => setPlaka(e.target.value)}
+              placeholder="araçla geldiyse"
+            />
+          </div>
+        )}
+      </div>
 
       <div>
         <label htmlFor="aciklama">Açıklama (isteğe bağlı)</label>
@@ -208,7 +233,7 @@ export default function HareketForm({
           type="text"
           value={aciklama}
           onChange={(e) => setAciklama(e.target.value)}
-          placeholder="Plaka, irsaliye no vb."
+          placeholder="İrsaliye no, not vb."
         />
       </div>
 

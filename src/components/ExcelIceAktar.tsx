@@ -265,7 +265,8 @@ export default function ExcelIceAktar({
       tonaj: s.tonaj!,
       tarih: s.tarih!,
       gemi: s.gemi || null,
-      aciklama: s.plaka ? `PLAKA: ${s.plaka}` : null,
+      plaka: s.plaka || null,
+      aciklama: null,
       created_by: user?.id,
     }));
 

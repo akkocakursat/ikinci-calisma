@@ -89,7 +89,7 @@ export default function HareketlerSayfasi() {
 
   function disaAktar() {
     csvIndir(`stok-hareketleri-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Tonaj", "Açıklama"],
+      ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Plaka", "Tonaj", "Açıklama"],
       ...filtreli.map((h) => [
         formatTarih(h.tarih),
         h.tip === "giris" ? "Giriş" : "Sevkiyat",
@@ -97,6 +97,7 @@ export default function HareketlerSayfasi() {
         h.depo?.antrepo ?? "",
         h.gemi ?? "",
         h.firma?.ad ?? "",
+        h.plaka ?? "",
         Number(h.tonaj),
         h.aciklama ?? "",
       ]),
@@ -197,6 +198,7 @@ export default function HareketlerSayfasi() {
                   <th className="pb-2 pr-4 font-medium">Depo</th>
                   <th className="pb-2 pr-4 font-medium">Gemi</th>
                   <th className="pb-2 pr-4 font-medium">Firma</th>
+                  <th className="pb-2 pr-4 font-medium">Plaka</th>
                   <th className="pb-2 pr-4 text-right font-medium">Tonaj</th>
                   <th className="pb-2 pr-4 font-medium">Açıklama</th>
                   {(duzenleyebilir || silebilir) && <th className="pb-2 font-medium"></th>}
@@ -220,6 +222,7 @@ export default function HareketlerSayfasi() {
                     <td className="py-2.5 pr-4 text-ink">{h.depo ? depoTamAd(h.depo) : "—"}</td>
                     <td className="py-2.5 pr-4 text-ink-2">{h.gemi ?? "—"}</td>
                     <td className="py-2.5 pr-4 text-ink">{h.firma?.ad ?? "—"}</td>
+                    <td className="py-2.5 pr-4 text-ink-2">{h.plaka ?? "—"}</td>
                     <td className="tabular py-2.5 pr-4 text-right font-medium text-ink">
                       {formatSayi(Number(h.tonaj))}
                     </td>
