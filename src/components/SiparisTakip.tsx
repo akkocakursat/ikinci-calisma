@@ -133,7 +133,17 @@ export default function SiparisTakip({
       };
     });
 
-    gruplar.sort((a, b) => b.siparis - a.siparis);
+    // Açık siparişi olanlar üstte: önce termini geçenler, sonra açık tonaja göre;
+    // tamamlananlar en altta
+    gruplar.sort((a, b) => {
+      const aAcik = a.kalan > 0 ? 0 : 1;
+      const bAcik = b.kalan > 0 ? 0 : 1;
+      if (aAcik !== bAcik) return aAcik - bAcik;
+      const aGec = terminDurumu(a.termin, a.kalan) === "gecikti" ? 0 : 1;
+      const bGec = terminDurumu(b.termin, b.kalan) === "gecikti" ? 0 : 1;
+      if (aGec !== bGec) return aGec - bGec;
+      return b.kalan - a.kalan || b.siparis - a.siparis;
+    });
 
     const genel = {
       siparis: gruplar.reduce((a, g) => a + g.siparis, 0),

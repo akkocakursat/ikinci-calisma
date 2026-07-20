@@ -132,7 +132,8 @@ export default function DepolarSayfasi() {
           g.alt.some((s) => (s.antrepo ?? "").toLocaleUpperCase("tr-TR").includes(t))
         );
       })
-      .sort((a, b) => a.ad.localeCompare(b.ad, "tr-TR"));
+      // stoğu çok olan depo üstte; stok eşitse ada göre
+      .sort((a, b) => b.kalan - a.kalan || a.ad.localeCompare(b.ad, "tr-TR"));
   }, [stoklar, netKalanHesapla, ara]);
 
   const toplam = useMemo(

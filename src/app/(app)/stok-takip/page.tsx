@@ -88,7 +88,9 @@ export default function StokTakipSayfasi() {
           .filter((g) => Number(g.kalan) !== 0)
           .sort((a, b) => Number(b.kalan) - Number(a.kalan));
         return { stok: s, gemiler };
-      });
+      })
+      // stoğu çok olan depo üstte
+      .sort((a, b) => Number(b.stok.kalan_stok) - Number(a.stok.kalan_stok));
 
     const toplamKalan = gruplar.reduce((a, g) => a + Number(g.stok.kalan_stok), 0);
     return { gruplar, toplamKalan };
@@ -148,7 +150,13 @@ export default function StokTakipSayfasi() {
         acikSiparis: Math.max(0, (siparisToplam.get(firmaId) ?? 0) - (sevkToplam.get(firmaId) ?? 0)),
         satirlar: [...f.satirlar.values()].sort((a, b) => b.tonaj - a.tonaj),
       }))
-      .sort((a, b) => b.toplam - a.toplam);
+      // açık siparişi olan firmalar üstte (açık tonaja göre), sonra en çok çekenler
+      .sort((a, b) => {
+        const aAcik = a.acikSiparis > 0 ? 0 : 1;
+        const bAcik = b.acikSiparis > 0 ? 0 : 1;
+        if (aAcik !== bAcik) return aAcik - bAcik;
+        return b.acikSiparis - a.acikSiparis || b.toplam - a.toplam;
+      });
 
     const t = firmaAra.trim().toLocaleUpperCase("tr-TR");
     const filtreli = t ? gruplar.filter((g) => g.ad.includes(t)) : gruplar;
