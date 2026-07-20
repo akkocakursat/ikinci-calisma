@@ -56,7 +56,7 @@ export default function StokTakipSayfasi() {
       setStoklar((s.data as DepoStok[]) ?? []);
       setGemiStoklar((g.data as DepoGemiStok[]) ?? []);
       setCikislar((c.data as unknown as Hareket[]) ?? []);
-      setSiparisler((sip.data as Siparis[]) ?? []);
+      setSiparisler((sip.data as unknown as Siparis[]) ?? []);
       setFirmaOzet((o.data as FirmaDepoOzet[]) ?? []);
       setYukleniyor(false);
     });
