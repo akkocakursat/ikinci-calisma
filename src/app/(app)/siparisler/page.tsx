@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Depo, DepoStok, Firma, FirmaDepoOzet, Siparis } from "@/lib/types";
+import type { Depo, DepoGemiStok, DepoStok, Firma, FirmaDepoOzet, Siparis } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { bugunISO, formatSayi, formatTarih, parseTonaj } from "@/lib/format";
 import { Card, Buton, Modal, Yukleniyor, BosDurum } from "@/components/ui";
@@ -25,11 +25,12 @@ export default function SiparislerSayfasi() {
   const [modalAcik, setModalAcik] = useState(false);
   const [duzenlenen, setDuzenlenen] = useState<Siparis | null>(null);
 
+  const [gemiStoklar, setGemiStoklar] = useState<DepoGemiStok[]>([]);
+
   // form alanları
-  const [firmaId, setFirmaId] = useState("");
-  const [yeniFirma, setYeniFirma] = useState("");
-  const [yeniFirmaModu, setYeniFirmaModu] = useState(false);
+  const [firmaAd, setFirmaAd] = useState("");
   const [depoId, setDepoId] = useState("");
+  const [gemi, setGemi] = useState("");
   const [miktar, setMiktar] = useState("");
   const [tarih, setTarih] = useState(bugunISO());
   const [termin, setTermin] = useState("");
@@ -40,7 +41,7 @@ export default function SiparislerSayfasi() {
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
-    const [s, d, f, o, st] = await Promise.all([
+    const [s, d, f, o, st, g] = await Promise.all([
       supabase
         .from("siparisler")
         .select("*, firma:firmalar(id, ad), depo:depolar(id, ad, antrepo)")
@@ -50,12 +51,14 @@ export default function SiparislerSayfasi() {
       supabase.from("firmalar").select("*").order("ad"),
       supabase.from("firma_depo_ozet").select("*"),
       supabase.from("depo_stok").select("*"),
+      supabase.from("depo_gemi_stok").select("*").order("gemi"),
     ]);
     setSiparisler((s.data as Siparis[]) ?? []);
     setDepolar((d.data as Depo[]) ?? []);
     setFirmalar((f.data as Firma[]) ?? []);
     setOzet((o.data as FirmaDepoOzet[]) ?? []);
     setStoklar((st.data as DepoStok[]) ?? []);
+    setGemiStoklar((g.data as DepoGemiStok[]) ?? []);
     setYukleniyor(false);
   }, []);
 
@@ -65,32 +68,38 @@ export default function SiparislerSayfasi() {
 
   function formAc(s?: Siparis) {
     setDuzenlenen(s ?? null);
-    setFirmaId(s?.firma_id ?? "");
-    setYeniFirma("");
-    setYeniFirmaModu(false);
+    setFirmaAd(s?.firma?.ad ?? "");
     setDepoId(s?.depo_id ?? "");
+    setGemi(s?.gemi ?? "");
     setMiktar(s ? String(s.miktar) : "");
     setTarih(s?.tarih ?? bugunISO());
-    setTermin(s?.termin ?? "");
+    setTermin(s?.termin ?? bugunISO());
     setAciklama(s?.aciklama ?? "");
     setHata(null);
     setMukerrerUyarisi(null);
     setModalAcik(true);
   }
 
+  // Seçilen depoda stoğu bulunan gemiler
+  const depoGemileri = depoId
+    ? gemiStoklar.filter((g) => g.depo_id === depoId && Number(g.kalan) > 0)
+    : [];
+
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
     const miktarSayi = parseTonaj(miktar);
+    const ad = firmaAd.trim().toLocaleUpperCase("tr-TR");
+    if (!ad) return setHata("Lütfen firma adını yazın.");
+    if (!depoId) return setHata("Lütfen depo seçin.");
     if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
-    if (!yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
-    if (yeniFirmaModu && !yeniFirma.trim()) return setHata("Yeni firma adını yazın.");
 
     setBekliyor(true);
     const supabase = createClient();
 
-    let firma = firmaId || null;
-    if (yeniFirmaModu) {
-      const ad = yeniFirma.trim().toLocaleUpperCase("tr-TR");
+    // Firma adını eşleştir; yoksa otomatik oluştur
+    let firma: string | null =
+      firmalar.find((f) => f.ad.toLocaleUpperCase("tr-TR") === ad)?.id ?? null;
+    if (!firma) {
       const { data: mevcut } = await supabase.from("firmalar").select("id").eq("ad", ad).maybeSingle();
       if (mevcut) {
         firma = mevcut.id;
@@ -131,7 +140,8 @@ export default function SiparislerSayfasi() {
 
     const kayit = {
       firma_id: firma,
-      depo_id: depoId || null, // boş = genel sipariş, her depodan düşülür
+      depo_id: depoId,
+      gemi: gemi || null,
       miktar: miktarSayi,
       tarih,
       termin: termin || null,
@@ -195,6 +205,7 @@ export default function SiparislerSayfasi() {
                   <th className="pr-4">Termin</th>
                   <th className="pr-4">Firma</th>
                   <th className="pr-4">Depo</th>
+                  <th className="pr-4">Gemi</th>
                   <th className="pr-4 text-right">Miktar (ton)</th>
                   <th className="pr-4">Açıklama</th>
                   {(duzenleyebilir || silebilir) && <th></th>}
@@ -217,6 +228,7 @@ export default function SiparislerSayfasi() {
                     <td className="py-2.5 pr-4 text-ink">
                       {s.depo ? depoTamAd(s.depo) : <span className="italic text-muted">GENEL</span>}
                     </td>
+                    <td className="py-2.5 pr-4 text-ink-2">{s.gemi ?? "—"}</td>
                     <td className="tabular py-2.5 pr-4 text-right font-medium text-ink">
                       {formatSayi(Number(s.miktar))}
                     </td>
@@ -264,40 +276,38 @@ export default function SiparislerSayfasi() {
       >
         <form onSubmit={kaydet} className="space-y-4">
           <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="sipFirma">Firma</label>
-              <button
-                type="button"
-                onClick={() => setYeniFirmaModu(!yeniFirmaModu)}
-                className="mb-1 text-xs font-medium text-brand hover:underline"
-              >
-                {yeniFirmaModu ? "Listeden seç" : "+ Yeni firma ekle"}
-              </button>
-            </div>
-            {yeniFirmaModu ? (
-              <input
-                id="sipFirma"
-                type="text"
-                value={yeniFirma}
-                onChange={(e) => setYeniFirma(e.target.value)}
-                placeholder="Yeni firma adı"
-              />
-            ) : (
-              <select id="sipFirma" value={firmaId} onChange={(e) => setFirmaId(e.target.value)}>
-                <option value="">Firma seçin…</option>
-                {firmalar.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.ad}
-                  </option>
-                ))}
-              </select>
-            )}
+            <label htmlFor="sipFirma">Firma Adı</label>
+            <input
+              id="sipFirma"
+              type="text"
+              list="firmaListesi"
+              value={firmaAd}
+              onChange={(e) => setFirmaAd(e.target.value)}
+              placeholder="Firma adını yazın veya listeden seçin"
+              required
+            />
+            <datalist id="firmaListesi">
+              {firmalar.map((f) => (
+                <option key={f.id} value={f.ad} />
+              ))}
+            </datalist>
+            <p className="mt-1 text-xs text-muted">
+              Kayıtlı firmalar yazarken önerilir; yeni bir ad yazarsanız firma otomatik oluşturulur.
+            </p>
           </div>
 
           <div>
-            <label htmlFor="sipDepo">Verilecek Depo (isteğe bağlı)</label>
-            <select id="sipDepo" value={depoId} onChange={(e) => setDepoId(e.target.value)}>
-              <option value="">GENEL — depo farketmez (her depodan düşülür)</option>
+            <label htmlFor="sipDepo">Verilecek Depo</label>
+            <select
+              id="sipDepo"
+              value={depoId}
+              onChange={(e) => {
+                setDepoId(e.target.value);
+                setGemi("");
+              }}
+              required
+            >
+              <option value="">Depo seçin…</option>
               {depolar
                 .filter((d) => d.aktif || d.id === duzenlenen?.depo_id)
                 .map((d) => (
@@ -306,11 +316,24 @@ export default function SiparislerSayfasi() {
                   </option>
                 ))}
             </select>
-            <p className="mt-1 text-xs text-muted">
-              Firma ürünü hangi depodan çekeceği belli değilse boş bırakın; hangi depodan
-              sevk ederseniz edin siparişten otomatik düşülür.
-            </p>
           </div>
+
+          {depoId && depoGemileri.length > 0 && (
+            <div>
+              <label htmlFor="sipGemi">Gemi (isteğe bağlı)</label>
+              <select id="sipGemi" value={gemi} onChange={(e) => setGemi(e.target.value)}>
+                <option value="">Gemi seçin…</option>
+                {depoGemileri.map((g) => (
+                  <option key={g.gemi} value={g.gemi}>
+                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} ton
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-muted">
+                Bu depodaki gemiler, gemi bazlı kalan stoklarıyla listelenir.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -338,7 +361,7 @@ export default function SiparislerSayfasi() {
           </div>
 
           <div>
-            <label htmlFor="sipTermin">Termin — Son Teslim Tarihi (isteğe bağlı)</label>
+            <label htmlFor="sipTermin">Termin — Son Teslim Tarihi</label>
             <input
               id="sipTermin"
               type="date"

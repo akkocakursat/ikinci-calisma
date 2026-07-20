@@ -72,6 +72,8 @@ export interface DepoGemiStok {
   gemi: string;
   giris: number;
   giris_sayisi: number;
+  cikis: number;
+  kalan: number;
 }
 
 export interface IslemGecmisi {
@@ -93,6 +95,7 @@ export interface Siparis {
   miktar: number;
   tarih: string;
   termin: string | null; // son teslim tarihi
+  gemi: string | null; // satılan ürünün geldiği gemi
   aciklama: string | null;
   created_by: string | null;
   created_at: string;

@@ -163,7 +163,7 @@ export default function DepolarSayfasi() {
     });
   }
 
-  // Bir deponun gemi kırılım satırları (en alt seviye)
+  // Bir deponun gemi kırılım satırları (en alt seviye): giriş / çıkış / kalan
   function gemiSatirlari(depoId: string) {
     const liste = gemiKirilim.get(depoId) ?? [];
     return liste.map((gs) => (
@@ -172,10 +172,16 @@ export default function DepolarSayfasi() {
         <td className="py-1.5 pr-4 text-right text-xs text-muted">
           {Number(gs.giris_sayisi)} giriş
         </td>
-        <td className="tabular py-1.5 pr-4 text-right text-xs font-semibold text-ink">
+        <td className="tabular py-1.5 pr-4 text-right text-xs text-ink-2">
           {formatSayi(Number(gs.giris))}
         </td>
-        <td colSpan={duzenleyebilir ? 5 : 4}></td>
+        <td className="tabular py-1.5 pr-4 text-right text-xs text-ink-2">
+          {formatSayi(Number(gs.cikis))}
+        </td>
+        <td className="tabular py-1.5 pr-4 text-right text-xs font-semibold text-ink">
+          {formatSayi(Number(gs.kalan))}
+        </td>
+        <td colSpan={duzenleyebilir ? 3 : 2}></td>
       </tr>
     ));
   }

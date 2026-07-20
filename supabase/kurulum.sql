@@ -120,6 +120,7 @@ create table if not exists public.siparisler (
   miktar numeric(12,3) not null check (miktar > 0),
   tarih date not null default current_date,
   termin date, -- son teslim tarihi (uyarılar için)
+  gemi text, -- satılan ürünün geldiği gemi
   aciklama text,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
@@ -173,10 +174,11 @@ with (security_invoker = on) as
 select
   h.depo_id,
   coalesce(h.gemi, 'GEMİ BELİRTİLMEMİŞ') as gemi,
-  sum(h.tonaj) as giris,
-  count(*) as giris_sayisi
+  coalesce(sum(h.tonaj) filter (where h.tip = 'giris'), 0) as giris,
+  count(*) filter (where h.tip = 'giris') as giris_sayisi,
+  coalesce(sum(h.tonaj) filter (where h.tip = 'cikis'), 0) as cikis,
+  coalesce(sum(case when h.tip = 'giris' then h.tonaj else -h.tonaj end), 0) as kalan
 from public.hareketler h
-where h.tip = 'giris'
 group by h.depo_id, coalesce(h.gemi, 'GEMİ BELİRTİLMEMİŞ');
 
 create or replace view public.firma_depo_ozet
