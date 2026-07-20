@@ -24,6 +24,7 @@ export default function SiparislerSayfasi() {
 
   const [modalAcik, setModalAcik] = useState(false);
   const [duzenlenen, setDuzenlenen] = useState<Siparis | null>(null);
+  const [ara, setAra] = useState("");
 
   const [gemiStoklar, setGemiStoklar] = useState<DepoGemiStok[]>([]);
 
@@ -84,6 +85,17 @@ export default function SiparislerSayfasi() {
   const depoGemileri = depoId
     ? gemiStoklar.filter((g) => g.depo_id === depoId && Number(g.kalan) > 0)
     : [];
+
+  // Arama: firma, depo veya gemiye göre hem takip hem kayıt listesi süzülür
+  const araT = ara.trim().toLocaleUpperCase("tr-TR");
+  const siparisFiltreli = araT
+    ? siparisler.filter(
+        (s) =>
+          (s.firma?.ad ?? "").includes(araT) ||
+          (s.depo ? depoTamAd(s.depo).toLocaleUpperCase("tr-TR") : "GENEL").includes(araT) ||
+          (s.gemi ?? "").includes(araT)
+      )
+    : siparisler;
 
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
@@ -191,11 +203,19 @@ export default function SiparislerSayfasi() {
       </header>
 
       <Card title="Sipariş Takip Tablosu" className="mb-6">
-        <SiparisTakip siparisler={siparisler} ozet={ozet} stoklar={stoklar} />
+        <div className="mb-4 max-w-sm">
+          <input
+            type="text"
+            value={ara}
+            onChange={(e) => setAra(e.target.value)}
+            placeholder="🔍 Firma, depo veya gemi ara…"
+          />
+        </div>
+        <SiparisTakip siparisler={siparisFiltreli} ozet={ozet} stoklar={stoklar} />
       </Card>
 
       <Card title="Sipariş Kayıtları">
-        {siparisler.length ? (
+        {siparisFiltreli.length ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -211,7 +231,7 @@ export default function SiparislerSayfasi() {
                 </tr>
               </thead>
               <tbody>
-                {siparisler.map((s) => (
+                {siparisFiltreli.map((s) => (
                   <tr key={s.id} className="border-b border-hairline/60 last:border-0 hover:bg-page/60">
                     <td className="py-2.5 pr-4 text-ink-2">{formatTarih(s.tarih)}</td>
                     <td

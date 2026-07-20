@@ -49,6 +49,7 @@ export default function DepolarSayfasi() {
   const [form, setForm] = useState<DepoFormVeri | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
+  const [ara, setAra] = useState("");
 
   const [siparisler, setSiparisler] = useState<Siparis[]>([]);
   const [firmaOzet, setFirmaOzet] = useState<FirmaDepoOzet[]>([]);
@@ -122,8 +123,17 @@ export default function DepolarSayfasi() {
           gemiler: [...gemiSeti].join(", "),
         };
       })
+      .filter((g) => {
+        if (!ara.trim()) return true;
+        const t = ara.trim().toLocaleUpperCase("tr-TR");
+        return (
+          g.ad.includes(t) ||
+          g.gemiler.toLocaleUpperCase("tr-TR").includes(t) ||
+          g.alt.some((s) => (s.antrepo ?? "").toLocaleUpperCase("tr-TR").includes(t))
+        );
+      })
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr-TR"));
-  }, [stoklar, netKalanHesapla]);
+  }, [stoklar, netKalanHesapla, ara]);
 
   const toplam = useMemo(
     () => ({
@@ -239,6 +249,14 @@ export default function DepolarSayfasi() {
       </header>
 
       <Card>
+        <div className="mb-4 max-w-sm">
+          <input
+            type="text"
+            value={ara}
+            onChange={(e) => setAra(e.target.value)}
+            placeholder="🔍 Depo, antrepo veya gemi ara…"
+          />
+        </div>
         {gruplar.length ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

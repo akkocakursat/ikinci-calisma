@@ -32,6 +32,8 @@ export default function StokTakipSayfasi() {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [acikDepolar, setAcikDepolar] = useState<Set<string>>(new Set());
   const [acikFirmalar, setAcikFirmalar] = useState<Set<string>>(new Set());
+  const [depoAra, setDepoAra] = useState("");
+  const [firmaAra, setFirmaAra] = useState("");
 
   function kumeToggle(k: Set<string>, id: string): Set<string> {
     const yeni = new Set(k);
@@ -71,8 +73,16 @@ export default function StokTakipSayfasi() {
       gemilerByDepo.set(g.depo_id, liste);
     }
 
+    const t = depoAra.trim().toLocaleUpperCase("tr-TR");
     const gruplar = stoklar
       .filter((s) => Number(s.toplam_giris) > 0 || Number(s.kalan_stok) !== 0)
+      .filter(
+        (s) =>
+          !t ||
+          s.ad.includes(t) ||
+          (s.antrepo ?? "").toLocaleUpperCase("tr-TR").includes(t) ||
+          (gemilerByDepo.get(s.depo_id) ?? []).some((g) => g.gemi.includes(t))
+      )
       .map((s) => {
         const gemiler = (gemilerByDepo.get(s.depo_id) ?? [])
           .filter((g) => Number(g.kalan) !== 0)
@@ -82,7 +92,7 @@ export default function StokTakipSayfasi() {
 
     const toplamKalan = gruplar.reduce((a, g) => a + Number(g.stok.kalan_stok), 0);
     return { gruplar, toplamKalan };
-  }, [stoklar, gemiStoklar]);
+  }, [stoklar, gemiStoklar, depoAra]);
 
   const depoGrafik = useMemo(
     () =>
@@ -140,10 +150,13 @@ export default function StokTakipSayfasi() {
       }))
       .sort((a, b) => b.toplam - a.toplam);
 
-    const genelToplam = gruplar.reduce((a, g) => a + g.toplam, 0);
-    const genelAcik = gruplar.reduce((a, g) => a + g.acikSiparis, 0);
-    return { gruplar, genelToplam, genelAcik };
-  }, [cikislar, siparisler, firmaOzet]);
+    const t = firmaAra.trim().toLocaleUpperCase("tr-TR");
+    const filtreli = t ? gruplar.filter((g) => g.ad.includes(t)) : gruplar;
+
+    const genelToplam = filtreli.reduce((a, g) => a + g.toplam, 0);
+    const genelAcik = filtreli.reduce((a, g) => a + g.acikSiparis, 0);
+    return { gruplar: filtreli, genelToplam, genelAcik };
+  }, [cikislar, siparisler, firmaOzet, firmaAra]);
 
   const firmaGrafik = useMemo(
     () =>
@@ -167,6 +180,14 @@ export default function StokTakipSayfasi() {
 
       {/* ================= DEPO BAZLI ================= */}
       <Card title="Depo Bazlı Stok Takip — hangi depoda, hangi gemiden ne kaldı?" className="mb-6">
+        <div className="mb-4 max-w-sm">
+          <input
+            type="text"
+            value={depoAra}
+            onChange={(e) => setDepoAra(e.target.value)}
+            placeholder="🔍 Depo, antrepo veya gemi ara…"
+          />
+        </div>
         {depoGrafik.length > 0 && (
           <div className="mb-6">
             <YatayBarGrafik veri={depoGrafik} renk={RENK.seri1} />
@@ -261,6 +282,14 @@ export default function StokTakipSayfasi() {
 
       {/* ================= FİRMA BAZLI ================= */}
       <Card title="Firma Bazlı Stok Takip — hangi firma, hangi depodan/gemiden ne çekti?">
+        <div className="mb-4 max-w-sm">
+          <input
+            type="text"
+            value={firmaAra}
+            onChange={(e) => setFirmaAra(e.target.value)}
+            placeholder="🔍 Firma ara…"
+          />
+        </div>
         {firmaGrafik.length > 0 && (
           <div className="mb-6">
             <YatayBarGrafik veri={firmaGrafik} renk={RENK.seri2} etiketGenislik={150} />

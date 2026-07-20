@@ -17,6 +17,7 @@ export default function RaporlarSayfasi() {
   const [stoklar, setStoklar] = useState<DepoStok[]>([]);
   const [siparisler, setSiparisler] = useState<Siparis[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [firmaAra, setFirmaAra] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -57,7 +58,10 @@ export default function RaporlarSayfasi() {
       f.toplam += t;
       firmaMap.set(o.firma_id, f);
     }
-    const firmalar = [...firmaMap.values()].sort((a, b) => b.toplam - a.toplam);
+    const t = firmaAra.trim().toLocaleUpperCase("tr-TR");
+    const firmalar = [...firmaMap.values()]
+      .filter((f) => !t || f.ad.includes(t))
+      .sort((a, b) => b.toplam - a.toplam);
 
     const depoToplam = new Map<string, number>();
     for (const d of depolar) {
@@ -69,7 +73,7 @@ export default function RaporlarSayfasi() {
     const genelToplam = firmalar.reduce((a, f) => a + f.toplam, 0);
 
     return { depolar, firmalar, depoToplam, genelToplam };
-  }, [ozet]);
+  }, [ozet, firmaAra]);
 
   // ---- Depo bazlı giriş/çıkış grafiği verisi ----
   const grafikVeri = useMemo(
@@ -184,6 +188,14 @@ export default function RaporlarSayfasi() {
           </Buton>
         }
       >
+        <div className="mb-4 max-w-sm">
+          <input
+            type="text"
+            value={firmaAra}
+            onChange={(e) => setFirmaAra(e.target.value)}
+            placeholder="🔍 Firma ara…"
+          />
+        </div>
         {pivot.firmalar.length ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

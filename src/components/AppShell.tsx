@@ -9,7 +9,6 @@ import {
   Boxes,
   ClipboardList,
   Warehouse,
-  Building2,
   BarChart3,
   History,
   Users,
@@ -37,7 +36,6 @@ const NAV = [
   { href: "/stok-takip", ad: "Stok Takip", Icon: Boxes },
   { href: "/siparisler", ad: "Siparişler", Icon: ClipboardList },
   { href: "/depolar", ad: "Depolar", Icon: Warehouse },
-  { href: "/firmalar", ad: "Firmalar", Icon: Building2 },
   { href: "/raporlar", ad: "Raporlar", Icon: BarChart3 },
   { href: "/islem-gecmisi", ad: "İşlem Geçmişi", Icon: History },
 ];
