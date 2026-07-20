@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  Boxes,
   ClipboardList,
   Warehouse,
   Building2,
@@ -33,6 +34,7 @@ export function useProfil() {
 const NAV = [
   { href: "/", ad: "Genel Bakış", Icon: LayoutDashboard },
   { href: "/hareketler", ad: "Stok Hareketleri", Icon: ArrowLeftRight },
+  { href: "/stok-takip", ad: "Stok Takip", Icon: Boxes },
   { href: "/siparisler", ad: "Siparişler", Icon: ClipboardList },
   { href: "/depolar", ad: "Depolar", Icon: Warehouse },
   { href: "/firmalar", ad: "Firmalar", Icon: Building2 },

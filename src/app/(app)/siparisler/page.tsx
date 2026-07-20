@@ -90,7 +90,6 @@ export default function SiparislerSayfasi() {
     const miktarSayi = parseTonaj(miktar);
     const ad = firmaAd.trim().toLocaleUpperCase("tr-TR");
     if (!ad) return setHata("Lütfen firma adını yazın.");
-    if (!depoId) return setHata("Lütfen depo seçin.");
     if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
 
     setBekliyor(true);
@@ -140,8 +139,8 @@ export default function SiparislerSayfasi() {
 
     const kayit = {
       firma_id: firma,
-      depo_id: depoId,
-      gemi: gemi || null,
+      depo_id: depoId || null, // boş = GENEL sipariş, hangi depodan sevk edilirse oradan düşer
+      gemi: depoId ? gemi || null : null,
       miktar: miktarSayi,
       tarih,
       termin: termin || null,
@@ -305,9 +304,8 @@ export default function SiparislerSayfasi() {
                 setDepoId(e.target.value);
                 setGemi("");
               }}
-              required
             >
-              <option value="">Depo seçin…</option>
+              <option value="">GENEL — depo henüz belli değil</option>
               {depolar
                 .filter((d) => d.aktif || d.id === duzenlenen?.depo_id)
                 .map((d) => (
@@ -316,6 +314,9 @@ export default function SiparislerSayfasi() {
                   </option>
                 ))}
             </select>
+            <p className="mt-1 text-xs text-muted">
+              Depo belli değilse GENEL bırakın; firma hangi depodan çekerse çeksin siparişten düşülür.
+            </p>
           </div>
 
           {depoId && depoGemileri.length > 0 && (
