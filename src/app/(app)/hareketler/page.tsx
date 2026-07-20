@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, Download, FileSpreadsheet, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Depo, Firma, Hareket, HareketTipi } from "@/lib/types";
+import type { Depo, DepoGemiStok, Firma, Hareket, HareketTipi } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
 import { formatSayi, formatTarih } from "@/lib/format";
 import { csvIndir } from "@/lib/csv";
@@ -21,6 +21,7 @@ export default function HareketlerSayfasi() {
   const [hareketler, setHareketler] = useState<Hareket[]>([]);
   const [depolar, setDepolar] = useState<Depo[]>([]);
   const [firmalar, setFirmalar] = useState<Firma[]>([]);
+  const [gemiStoklar, setGemiStoklar] = useState<DepoGemiStok[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
 
   // filtreler
@@ -37,19 +38,21 @@ export default function HareketlerSayfasi() {
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
-    const [h, d, f] = await Promise.all([
+    const [h, d, f, g] = await Promise.all([
       supabase
         .from("hareketler")
         .select("*, depo:depolar(id, ad, antrepo), firma:firmalar(id, ad)")
         .order("tarih", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(2000),
-      supabase.from("depolar").select("*").order("ad"),
+      supabase.from("depolar").select("*").order("ad").order("antrepo"),
       supabase.from("firmalar").select("*").order("ad"),
+      supabase.from("depo_gemi_stok").select("*").order("gemi"),
     ]);
     setHareketler((h.data as Hareket[]) ?? []);
     setDepolar((d.data as Depo[]) ?? []);
     setFirmalar((f.data as Firma[]) ?? []);
+    setGemiStoklar((g.data as DepoGemiStok[]) ?? []);
     setYukleniyor(false);
   }, []);
 
@@ -307,6 +310,7 @@ export default function HareketlerSayfasi() {
             tip={modalTip}
             depolar={depolar.filter((d) => d.aktif || d.id === duzenlenen?.depo_id)}
             firmalar={firmalar}
+            gemiStoklar={gemiStoklar}
             duzenlenen={duzenlenen}
             kaydedildi={() => { setModalTip(null); setDuzenlenen(null); yenile(); }}
           />

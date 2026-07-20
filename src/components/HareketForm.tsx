@@ -2,21 +2,23 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Depo, Firma, Hareket, HareketTipi } from "@/lib/types";
+import type { Depo, DepoGemiStok, Firma, Hareket, HareketTipi } from "@/lib/types";
 import { depoTamAd } from "@/lib/types";
-import { bugunISO, parseTonaj } from "@/lib/format";
+import { bugunISO, formatSayi, parseTonaj } from "@/lib/format";
 import { Buton } from "@/components/ui";
 
 export default function HareketForm({
   tip,
   depolar,
   firmalar,
+  gemiStoklar = [],
   duzenlenen,
   kaydedildi,
 }: {
   tip: HareketTipi;
   depolar: Depo[];
   firmalar: Firma[];
+  gemiStoklar?: DepoGemiStok[];
   duzenlenen?: Hareket | null;
   kaydedildi: () => void;
 }) {
@@ -34,6 +36,19 @@ export default function HareketForm({
   // mükerrer kayıt uyarısı: uyarılan değer kombinasyonu saklanır,
   // kullanıcı aynı değerlerle ikinci kez "Kaydet"e basarsa onaylanmış sayılır
   const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
+
+  // Sevkiyatta: seçilen depoda stoğu bulunan gemiler (düzenlemede mevcut gemi de listelenir)
+  const depoGemileri = depoId
+    ? gemiStoklar.filter(
+        (g) =>
+          g.depo_id === depoId && (Number(g.kalan) > 0 || (duzenlenen && g.gemi === duzenlenen.gemi))
+      )
+    : [];
+
+  // Girişte: bilinen tüm gemi adları öneri olarak sunulur
+  const tumGemiler = [...new Set(gemiStoklar.map((g) => g.gemi))].sort((a, b) =>
+    a.localeCompare(b, "tr-TR")
+  );
 
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
@@ -122,7 +137,15 @@ export default function HareketForm({
     <form onSubmit={kaydet} className="space-y-4">
       <div>
         <label htmlFor="depo">Depo</label>
-        <select id="depo" value={depoId} onChange={(e) => setDepoId(e.target.value)} required>
+        <select
+          id="depo"
+          value={depoId}
+          onChange={(e) => {
+            setDepoId(e.target.value);
+            if (tip === "cikis") setGemi("");
+          }}
+          required
+        >
           <option value="">Depo seçin…</option>
           {depolar.map((d) => (
             <option key={d.id} value={d.id}>
@@ -192,38 +215,58 @@ export default function HareketForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="gemi">Gemi Adı (isteğe bağlı)</label>
+          {tip === "cikis" ? (
+            <>
+              <label htmlFor="gemi">Gemi</label>
+              <select
+                id="gemi"
+                value={gemi}
+                onChange={(e) => setGemi(e.target.value)}
+                disabled={!depoId}
+              >
+                <option value="">
+                  {!depoId
+                    ? "Önce depo seçin…"
+                    : depoGemileri.length
+                      ? "Gemi seçin…"
+                      : "Bu depoda gemi stoğu yok"}
+                </option>
+                {depoGemileri.map((g) => (
+                  <option key={g.gemi} value={g.gemi}>
+                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} ton
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <label htmlFor="gemi">Gemi Adı</label>
+              <input
+                id="gemi"
+                type="text"
+                list="gemiListesi"
+                value={gemi}
+                onChange={(e) => setGemi(e.target.value)}
+                placeholder="örn. NEW SHAIM"
+              />
+              <datalist id="gemiListesi">
+                {tumGemiler.map((g) => (
+                  <option key={g} value={g} />
+                ))}
+              </datalist>
+            </>
+          )}
+        </div>
+        <div>
+          <label htmlFor="plaka">Araç Plakası (isteğe bağlı)</label>
           <input
-            id="gemi"
+            id="plaka"
             type="text"
-            value={gemi}
-            onChange={(e) => setGemi(e.target.value)}
-            placeholder="örn. NEW SHAIM"
+            value={plaka}
+            onChange={(e) => setPlaka(e.target.value)}
+            placeholder="örn. 31 ABC 123"
           />
         </div>
-        {tip === "cikis" ? (
-          <div>
-            <label htmlFor="plaka">Araç Plakası (isteğe bağlı)</label>
-            <input
-              id="plaka"
-              type="text"
-              value={plaka}
-              onChange={(e) => setPlaka(e.target.value)}
-              placeholder="örn. 31 ABC 123"
-            />
-          </div>
-        ) : (
-          <div>
-            <label htmlFor="plaka">Plaka (isteğe bağlı)</label>
-            <input
-              id="plaka"
-              type="text"
-              value={plaka}
-              onChange={(e) => setPlaka(e.target.value)}
-              placeholder="araçla geldiyse"
-            />
-          </div>
-        )}
       </div>
 
       <div>
