@@ -73,25 +73,39 @@ export default function DepolarSayfasi() {
     yenile();
   }, [yenile]);
 
-  // Depo bazlı açık sipariş: o depoya bağlanan siparişlerden, aynı firmaya
-  // o depodan yapılmış sevkiyatlar düşülür (genel siparişler depoya bağlanamaz).
+  // Depo bazlı açık sipariş: bir firmanın siparişi hangi depoya bağlı olursa
+  // olsun, firma o ürünü BAŞKA bir depodan da teslim alabilir. Bu yüzden önce
+  // firma bazında toplam açık miktar hesaplanır (toplam sipariş - firmaya
+  // yapılan TÜM sevkiyat, depo farketmeksizin); sadece o firmanın hâlâ açığı
+  // varsa, kalan miktar depoya-bağlı siparişlerine oranla dağıtılır. Siparişi
+  // olmayan firmaların sevkiyatı hiçbir deponun "açık sipariş" rakamını etkilemez.
   const acikSiparisMap = useMemo(() => {
-    const sevk = new Map<string, number>(); // "firma|depo" -> sevk edilen
+    const firmaSevkToplam = new Map<string, number>(); // firmaId -> TÜM depolardan toplam sevk
     for (const o of firmaOzet)
-      sevk.set(`${o.firma_id}|${o.depo_id}`, Number(o.toplam_tonaj));
+      firmaSevkToplam.set(o.firma_id, (firmaSevkToplam.get(o.firma_id) ?? 0) + Number(o.toplam_tonaj));
 
-    const siparis = new Map<string, number>(); // "firma|depo" -> sipariş
+    const firmaSiparisToplam = new Map<string, number>(); // firmaId -> toplam sipariş (genel + depoya bağlı)
+    const depoSiparisByFirma = new Map<string, Map<string, number>>(); // firmaId -> depoId -> tutar
     for (const s of siparisler) {
-      if (!s.depo_id) continue;
-      const k = `${s.firma_id}|${s.depo_id}`;
-      siparis.set(k, (siparis.get(k) ?? 0) + Number(s.miktar));
+      firmaSiparisToplam.set(s.firma_id, (firmaSiparisToplam.get(s.firma_id) ?? 0) + Number(s.miktar));
+      if (s.depo_id) {
+        const depoMap = depoSiparisByFirma.get(s.firma_id) ?? new Map<string, number>();
+        depoMap.set(s.depo_id, (depoMap.get(s.depo_id) ?? 0) + Number(s.miktar));
+        depoSiparisByFirma.set(s.firma_id, depoMap);
+      }
     }
 
     const m = new Map<string, number>(); // depoId -> açık sipariş
-    for (const [k, tutar] of siparis) {
-      const depoId = k.split("|")[1];
-      const acik = Math.max(0, tutar - (sevk.get(k) ?? 0));
-      m.set(depoId, (m.get(depoId) ?? 0) + acik);
+    for (const [firmaId, depoMap] of depoSiparisByFirma) {
+      const toplamSiparis = firmaSiparisToplam.get(firmaId) ?? 0;
+      const toplamSevk = firmaSevkToplam.get(firmaId) ?? 0;
+      const toplamAcik = Math.max(0, toplamSiparis - toplamSevk);
+      const depoyaBagliToplam = [...depoMap.values()].reduce((a, b) => a + b, 0);
+      if (toplamAcik <= 0 || depoyaBagliToplam <= 0) continue;
+      for (const [depoId, tutar] of depoMap) {
+        const pay = (tutar / depoyaBagliToplam) * toplamAcik;
+        m.set(depoId, (m.get(depoId) ?? 0) + pay);
+      }
     }
     return m;
   }, [siparisler, firmaOzet]);
