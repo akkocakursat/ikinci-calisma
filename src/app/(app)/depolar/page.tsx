@@ -26,13 +26,16 @@ interface DepoGrubu {
 }
 
 function NetKalanHucre({ deger, kalin = false }: { deger: number; kalin?: boolean }) {
+  // Oransal sipariş dağıtımı ondalıklı sayılar üretir; bu sütunda karışıklığı
+  // önlemek için en yakın tam tona yuvarlanır (ör. 858718,632 -> 858.719).
+  const yuvarlak = Math.round(deger);
   return (
     <span
       className={`tabular ${kalin ? "font-semibold" : "font-medium"} ${
-        deger < 0 ? "text-red-600" : "text-yesil"
+        yuvarlak < 0 ? "text-red-600" : "text-yesil"
       }`}
     >
-      {formatSayi(deger)}
+      {formatSayi(yuvarlak)}
     </span>
   );
 }
