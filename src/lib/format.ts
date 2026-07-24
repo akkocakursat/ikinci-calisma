@@ -1,6 +1,9 @@
+// Ondalık virgül / binlik nokta ayracı yoğun tablolarda görsel olarak
+// ayırt edilemediği ve tekrar tekrar yanlış okunmasına yol açtığı için
+// tüm tonaj gösterimleri tam tona yuvarlanır (ör. 858718,632 -> 858.719).
 const tonFmt = new Intl.NumberFormat("tr-TR", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 3,
+  maximumFractionDigits: 0,
 });
 
 const kisaFmt = new Intl.NumberFormat("tr-TR", {

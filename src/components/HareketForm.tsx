@@ -36,6 +36,11 @@ export default function HareketForm({
   // mükerrer kayıt uyarısı: uyarılan değer kombinasyonu saklanır,
   // kullanıcı aynı değerlerle ikinci kez "Kaydet"e basarsa onaylanmış sayılır
   const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
+  // büyük değer uyarısı: virgül yerine nokta yazılması gibi yazım hatalarının
+  // tonajı binlerce kat şişirmesini önlemek için makul üst sınırın üstünde
+  // onay istenir (uyarılan değerle aynı değer tekrar gönderilirse kabul edilir)
+  const [buyukDegerUyarisi, setBuyukDegerUyarisi] = useState<number | null>(null);
+  const BUYUK_DEGER_ESIGI = 50000;
 
   // Sevkiyatta: seçilen depoda stoğu bulunan gemiler (düzenlemede mevcut gemi de listelenir)
   const depoGemileri = depoId
@@ -60,6 +65,11 @@ export default function HareketForm({
     if (tip === "cikis" && !yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
     if (tip === "cikis" && yeniFirmaModu && !yeniFirma.trim())
       return setHata("Yeni firma adını yazın.");
+
+    if (tonajSayi > BUYUK_DEGER_ESIGI && buyukDegerUyarisi !== tonajSayi) {
+      setBuyukDegerUyarisi(tonajSayi);
+      return;
+    }
 
     setBekliyor(true);
     const supabase = createClient();
@@ -105,6 +115,7 @@ export default function HareketForm({
       }
     }
     setMukerrerUyarisi(null);
+    setBuyukDegerUyarisi(null);
 
     const kayit = {
       depo_id: depoId,
@@ -290,21 +301,32 @@ export default function HareketForm({
         </p>
       )}
 
+      {buyukDegerUyarisi !== null && (
+        <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+          ⚠ <b>Çok büyük bir tonaj:</b> {formatSayi(buyukDegerUyarisi)} ton olarak kaydedilecek.
+          Ondalık ayracı virgül yerine nokta yazıldığında tonaj binlerce kat şişebilir (ör. &quot;16.262.560&quot;
+          yerine &quot;16.262,560&quot;). Değer gerçekten doğruysa aşağıdaki butona tekrar basarak onaylayın;
+          değilse tonajı virgülle yeniden yazın.
+        </p>
+      )}
+
       <Buton
         tip="submit"
         disabled={bekliyor}
-        tur={mukerrerUyarisi ? "tehlike" : "birincil"}
+        tur={mukerrerUyarisi || buyukDegerUyarisi !== null ? "tehlike" : "birincil"}
         className="w-full justify-center"
       >
         {bekliyor
           ? "Kaydediliyor…"
           : mukerrerUyarisi
             ? "Mükerrer Değil, Yine de Kaydet"
-            : duzenlenen
-              ? "Değişiklikleri Kaydet"
-              : tip === "giris"
-                ? "Stok Girişi Kaydet"
-                : "Sevkiyatı Kaydet"}
+            : buyukDegerUyarisi !== null
+              ? "Tonaj Doğru, Yine de Kaydet"
+              : duzenlenen
+                ? "Değişiklikleri Kaydet"
+                : tip === "giris"
+                  ? "Stok Girişi Kaydet"
+                  : "Sevkiyatı Kaydet"}
       </Buton>
     </form>
   );

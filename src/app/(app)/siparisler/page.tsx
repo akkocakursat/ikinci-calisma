@@ -39,6 +39,10 @@ export default function SiparislerSayfasi() {
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
   const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
+  // büyük değer uyarısı: virgül yerine nokta yazılması gibi yazım hatalarının
+  // miktarı binlerce kat şişirmesini önlemek için makul üst sınırın üstünde onay istenir
+  const [buyukDegerUyarisi, setBuyukDegerUyarisi] = useState<number | null>(null);
+  const BUYUK_DEGER_ESIGI = 50000;
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
@@ -78,6 +82,7 @@ export default function SiparislerSayfasi() {
     setAciklama(s?.aciklama ?? "");
     setHata(null);
     setMukerrerUyarisi(null);
+    setBuyukDegerUyarisi(null);
     setModalAcik(true);
   }
 
@@ -103,6 +108,11 @@ export default function SiparislerSayfasi() {
     const ad = firmaAd.trim().toLocaleUpperCase("tr-TR");
     if (!ad) return setHata("Lütfen firma adını yazın.");
     if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
+
+    if (miktarSayi > BUYUK_DEGER_ESIGI && buyukDegerUyarisi !== miktarSayi) {
+      setBuyukDegerUyarisi(miktarSayi);
+      return;
+    }
 
     setBekliyor(true);
     const supabase = createClient();
@@ -148,6 +158,7 @@ export default function SiparislerSayfasi() {
       }
     }
     setMukerrerUyarisi(null);
+    setBuyukDegerUyarisi(null);
 
     const kayit = {
       firma_id: firma,
@@ -415,19 +426,31 @@ export default function SiparislerSayfasi() {
             </p>
           )}
 
+          {buyukDegerUyarisi !== null && (
+            <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+              ⚠ <b>Çok büyük bir miktar:</b> {formatSayi(buyukDegerUyarisi)} ton olarak
+              kaydedilecek. Ondalık ayracı virgül yerine nokta yazıldığında miktar binlerce kat
+              şişebilir (ör. &quot;16.262.560&quot; yerine &quot;16.262,560&quot;). Değer gerçekten
+              doğruysa aşağıdaki butona tekrar basarak onaylayın; değilse miktarı virgülle yeniden
+              yazın.
+            </p>
+          )}
+
           <Buton
             tip="submit"
             disabled={bekliyor}
-            tur={mukerrerUyarisi ? "tehlike" : "birincil"}
+            tur={mukerrerUyarisi || buyukDegerUyarisi !== null ? "tehlike" : "birincil"}
             className="w-full justify-center"
           >
             {bekliyor
               ? "Kaydediliyor…"
               : mukerrerUyarisi
                 ? "Mükerrer Değil, Yine de Kaydet"
-                : duzenlenen
-                  ? "Değişiklikleri Kaydet"
-                  : "Siparişi Kaydet"}
+                : buyukDegerUyarisi !== null
+                  ? "Miktar Doğru, Yine de Kaydet"
+                  : duzenlenen
+                    ? "Değişiklikleri Kaydet"
+                    : "Siparişi Kaydet"}
           </Buton>
         </form>
       </Modal>
