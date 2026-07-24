@@ -51,7 +51,7 @@ function IpucuKutusu({
 export function YatayBarGrafik({
   veri,
   renk = RENK.seri1,
-  birim = "ton",
+  birim = "kg",
   etiketGenislik = 180,
 }: {
   veri: { ad: string; deger: number }[];
@@ -134,7 +134,7 @@ export function GirisCikisBar({
                 baslik={String(label)}
                 satirlar={payload.map((p) => ({
                   ad: p.name === "giris" ? "Giriş" : "Çıkış",
-                  deger: `${formatSayi(Number(p.value))} ton`,
+                  deger: `${formatSayi(Number(p.value))} kg`,
                   renk: p.color,
                 }))}
               />
@@ -190,7 +190,7 @@ export function GunlukTrend({ veri }: { veri: { tarih: string; tonaj: number }[]
                 satirlar={[
                   {
                     ad: "Sevkiyat",
-                    deger: `${formatSayi(Number(payload[0].value))} ton`,
+                    deger: `${formatSayi(Number(payload[0].value))} kg`,
                     renk: RENK.seri1,
                   },
                 ]}

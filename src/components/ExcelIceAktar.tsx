@@ -68,8 +68,8 @@ export default function ExcelIceAktar({
     const XLSX = await import("xlsx");
     const veri = [
       ["TARİH", "FİRMA", "PLAKA", "TONAJ", "DEPO ADI", "ANTREPO", "GEMİ ADI"],
-      ["14.07.2026", "ÖRNEK YEM SAN.", "31 ABC 123", "27,540", "DÖNMEZOĞLU", "MİLAS-SİNCAN", "SABEEL STAR"],
-      ["14.07.2026", "ÖRNEK TAVUKÇULUK", "01 XY 456", "26,280", "TOROS", "", "NEW SHAIM"],
+      ["14.07.2026", "ÖRNEK YEM SAN.", "31 ABC 123", "27540", "DÖNMEZOĞLU", "MİLAS-SİNCAN", "SABEEL STAR"],
+      ["14.07.2026", "ÖRNEK TAVUKÇULUK", "01 XY 456", "26280", "TOROS", "", "NEW SHAIM"],
     ];
     const sayfa = XLSX.utils.aoa_to_sheet(veri);
     sayfa["!cols"] = [{ wch: 12 }, { wch: 24 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
@@ -143,8 +143,12 @@ export default function ExcelIceAktar({
         const gemi = trBuyuk(String(iGemi >= 0 ? r[iGemi] ?? "" : ""));
         const tarih = iTarih >= 0 ? tarihCevir(r[iTarih]) : null;
         const tonajHam = r[iTonaj];
+        // Excel'de sayısal hücre olarak girilmişse (kg cinsinden) doğrudan
+        // 1000'e bölünür; metin hücrelerinde parseTonaj aynı dönüşümü yapar.
         const tonaj =
-          typeof tonajHam === "number" && tonajHam > 0 ? tonajHam : parseTonaj(String(tonajHam ?? ""));
+          typeof tonajHam === "number" && tonajHam > 0
+            ? tonajHam / 1000
+            : parseTonaj(String(tonajHam ?? ""));
 
         const satir: OnizlemeSatiri = {
           satirNo: i + 1,
@@ -277,7 +281,7 @@ export default function ExcelIceAktar({
       return;
     }
     setSonuc(
-      `${kayitlar.length} sevkiyat kaydı başarıyla eklendi (toplam ${formatSayi(toplamTonaj)} ton). ` +
+      `${kayitlar.length} sevkiyat kaydı başarıyla eklendi (toplam ${formatSayi(toplamTonaj)} kg). ` +
         (yeniFirmaAdlari.length ? `${yeniFirmaAdlari.length} yeni firma oluşturuldu. ` : "") +
         "Depo stokları ve sipariş bakiyeleri otomatik güncellendi."
     );
@@ -301,7 +305,7 @@ export default function ExcelIceAktar({
           onayladığınızda tüm çıkışlar işlenir — depo stokları ve sipariş bakiyeleri otomatik düşer.
         </p>
         <p className="text-xs text-muted">
-          Sütunlar: TARİH (GG.AA.YYYY) · FİRMA · PLAKA · TONAJ (ton, örn. 27,540) · DEPO ADI ·
+          Sütunlar: TARİH (GG.AA.YYYY) · FİRMA · PLAKA · TONAJ (kg, örn. 27540) · DEPO ADI ·
           ANTREPO (varsa) · GEMİ ADI (isteğe bağlı). Kabul edilen dosyalar: .xlsx, .xls, .csv
         </p>
       </div>
@@ -340,7 +344,7 @@ export default function ExcelIceAktar({
             {uyariSayisi > 0 && <span className="text-amber-700">{uyariSayisi} mükerrer uyarısı</span>}
             {hataSayisi > 0 && <span className="text-red-600">{hataSayisi} hatalı (atlanacak)</span>}
             <span className="tabular text-ink-2">
-              Toplam: <b className="text-ink">{formatSayi(toplamTonaj)} ton</b>
+              Toplam: <b className="text-ink">{formatSayi(toplamTonaj)} kg</b>
             </span>
           </div>
 
@@ -352,7 +356,7 @@ export default function ExcelIceAktar({
                   <th className="px-2">Tarih</th>
                   <th className="px-2">Firma</th>
                   <th className="px-2">Plaka</th>
-                  <th className="px-2 text-right">Tonaj</th>
+                  <th className="px-2 text-right">Tonaj (kg)</th>
                   <th className="px-2">Depo</th>
                   <th className="px-2">Gemi</th>
                   <th className="px-2">Durum</th>
@@ -409,7 +413,7 @@ export default function ExcelIceAktar({
           >
             {bekliyor
               ? "Aktarılıyor…"
-              : `${aktarilacaklar.length} Sevkiyat Kaydını İçe Aktar (${formatSayi(toplamTonaj)} ton)`}
+              : `${aktarilacaklar.length} Sevkiyat Kaydını İçe Aktar (${formatSayi(toplamTonaj)} kg)`}
           </Buton>
         </>
       )}

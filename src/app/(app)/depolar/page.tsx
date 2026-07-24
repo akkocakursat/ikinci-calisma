@@ -26,16 +26,15 @@ interface DepoGrubu {
 }
 
 function NetKalanHucre({ deger, kalin = false }: { deger: number; kalin?: boolean }) {
-  // Oransal sipariş dağıtımı ondalıklı sayılar üretir; bu sütunda karışıklığı
-  // önlemek için en yakın tam tona yuvarlanır (ör. 858718,632 -> 858.719).
-  const yuvarlak = Math.round(deger);
+  // formatSayi zaten kg'ye çevirip tam sayıya yuvarlıyor; burada ayrıca
+  // tona yuvarlamak gereksiz kg hassasiyeti kaybına yol açar.
   return (
     <span
       className={`tabular ${kalin ? "font-semibold" : "font-medium"} ${
-        yuvarlak < 0 ? "text-red-600" : "text-yesil"
+        deger < 0 ? "text-red-600" : "text-yesil"
       }`}
     >
-      {formatSayi(yuvarlak)}
+      {formatSayi(deger)}
     </span>
   );
 }
@@ -256,7 +255,7 @@ export default function DepolarSayfasi() {
           <h1 className="text-xl font-semibold text-ink">Depolar</h1>
           <p className="mt-1 text-sm text-muted">
             {gruplar.length} depo, {stoklar.length} antrepo — kalan toplam stok{" "}
-            {formatSayi(toplam.kalan)} ton
+            {formatSayi(toplam.kalan)} kg
           </p>
         </div>
         {duzenleyebilir && (
@@ -282,10 +281,10 @@ export default function DepolarSayfasi() {
                 <tr className="tablo-baslik">
                   <th className="pb-2 pr-4 font-medium">Depo / Antrepo</th>
                   <th className="pb-2 pr-4 font-medium">Gemi</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Giriş (ton)</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Çıkış (ton)</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Kalan (ton)</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Sipariş Sonrası Kalan (ton)</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Giriş (kg)</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Çıkış (kg)</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Kalan (kg)</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Sipariş Sonrası Kalan (kg)</th>
                   <th className="pb-2 pr-4 font-medium">Durum</th>
                   {duzenleyebilir && <th className="pb-2 font-medium"></th>}
                 </tr>

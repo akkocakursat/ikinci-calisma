@@ -39,10 +39,10 @@ export default function SiparislerSayfasi() {
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
   const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
-  // büyük değer uyarısı: virgül yerine nokta yazılması gibi yazım hatalarının
-  // miktarı binlerce kat şişirmesini önlemek için makul üst sınırın üstünde onay istenir
+  // büyük değer uyarısı: yazım hatalarının (fazladan/eksik hane) miktarı ciddi
+  // şekilde şişirmesini önlemek için makul üst sınırın (ton cinsinden) üstünde onay istenir
   const [buyukDegerUyarisi, setBuyukDegerUyarisi] = useState<number | null>(null);
-  const BUYUK_DEGER_ESIGI = 50000;
+  const BUYUK_DEGER_ESIGI = 50000; // ton
 
   const yenile = useCallback(async () => {
     const supabase = createClient();
@@ -107,7 +107,7 @@ export default function SiparislerSayfasi() {
     const miktarSayi = parseTonaj(miktar);
     const ad = firmaAd.trim().toLocaleUpperCase("tr-TR");
     if (!ad) return setHata("Lütfen firma adını yazın.");
-    if (!miktarSayi) return setHata("Miktar sıfırdan büyük bir sayı olmalı (örn. 5.000).");
+    if (!miktarSayi) return setHata("Miktar (kg) sıfırdan büyük bir sayı olmalı (örn. 5.000).");
 
     if (miktarSayi > BUYUK_DEGER_ESIGI && buyukDegerUyarisi !== miktarSayi) {
       setBuyukDegerUyarisi(miktarSayi);
@@ -236,7 +236,7 @@ export default function SiparislerSayfasi() {
                   <th className="pr-4">Firma</th>
                   <th className="pr-4">Depo</th>
                   <th className="pr-4">Gemi</th>
-                  <th className="pr-4 text-right">Miktar (ton)</th>
+                  <th className="pr-4 text-right">Miktar (kg)</th>
                   <th className="pr-4">Açıklama</th>
                   {(duzenleyebilir || silebilir) && <th></th>}
                 </tr>
@@ -357,7 +357,7 @@ export default function SiparislerSayfasi() {
                 <option value="">Gemi seçin…</option>
                 {depoGemileri.map((g) => (
                   <option key={g.gemi} value={g.gemi}>
-                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} ton
+                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} kg
                   </option>
                 ))}
               </select>
@@ -369,14 +369,14 @@ export default function SiparislerSayfasi() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="sipMiktar">Sipariş Miktarı (ton)</label>
+              <label htmlFor="sipMiktar">Sipariş Miktarı (kg)</label>
               <input
                 id="sipMiktar"
                 type="text"
                 inputMode="decimal"
                 value={miktar}
                 onChange={(e) => setMiktar(e.target.value)}
-                placeholder="örn. 5.000"
+                placeholder="kg — örn. 5.000"
                 required
               />
             </div>
@@ -428,11 +428,10 @@ export default function SiparislerSayfasi() {
 
           {buyukDegerUyarisi !== null && (
             <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-              ⚠ <b>Çok büyük bir miktar:</b> {formatSayi(buyukDegerUyarisi)} ton olarak
-              kaydedilecek. Ondalık ayracı virgül yerine nokta yazıldığında miktar binlerce kat
-              şişebilir (ör. &quot;16.262.560&quot; yerine &quot;16.262,560&quot;). Değer gerçekten
-              doğruysa aşağıdaki butona tekrar basarak onaylayın; değilse miktarı virgülle yeniden
-              yazın.
+              ⚠ <b>Çok büyük bir miktar:</b> {formatSayi(buyukDegerUyarisi)} kg olarak
+              kaydedilecek. Bu, alışılmışın çok üzerinde bir değer — yazarken bir hane fazla/eksik
+              girilmiş olabilir. Değer gerçekten doğruysa aşağıdaki butona tekrar basarak onaylayın;
+              değilse kg değerini kontrol edip yeniden yazın.
             </p>
           )}
 

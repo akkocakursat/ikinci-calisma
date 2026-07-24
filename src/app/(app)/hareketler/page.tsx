@@ -93,7 +93,7 @@ export default function HareketlerSayfasi() {
 
   function aktarimSatirlari() {
     return [
-      ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Plaka", "Tonaj", "Açıklama"],
+      ["Tarih", "İşlem", "Depo", "Antrepo", "Gemi", "Firma", "Plaka", "Tonaj (kg)", "Açıklama"],
       ...filtreli.map((h) => [
         formatTarih(h.tarih),
         h.tip === "giris" ? "Giriş" : "Sevkiyat",
@@ -102,7 +102,7 @@ export default function HareketlerSayfasi() {
         h.gemi ?? "",
         h.firma?.ad ?? "",
         h.plaka ?? "",
-        Number(h.tonaj),
+        Number(h.tonaj) * 1000,
         h.aciklama ?? "",
       ]),
     ];
@@ -196,10 +196,10 @@ export default function HareketlerSayfasi() {
             Kayıt: <b className="tabular text-ink">{filtreli.length}</b>
           </span>
           <span className="text-ink-2">
-            Toplam Giriş: <b className="tabular text-ink">{formatSayi(ozet.giris)} ton</b>
+            Toplam Giriş: <b className="tabular text-ink">{formatSayi(ozet.giris)} kg</b>
           </span>
           <span className="text-ink-2">
-            Toplam Sevkiyat: <b className="tabular text-ink">{formatSayi(ozet.cikis)} ton</b>
+            Toplam Sevkiyat: <b className="tabular text-ink">{formatSayi(ozet.cikis)} kg</b>
           </span>
         </div>
       </Card>
@@ -216,7 +216,7 @@ export default function HareketlerSayfasi() {
                   <th className="pb-2 pr-4 font-medium">Gemi</th>
                   <th className="pb-2 pr-4 font-medium">Firma</th>
                   <th className="pb-2 pr-4 font-medium">Plaka</th>
-                  <th className="pb-2 pr-4 text-right font-medium">Tonaj</th>
+                  <th className="pb-2 pr-4 text-right font-medium">Tonaj (kg)</th>
                   <th className="pb-2 pr-4 font-medium">Açıklama</th>
                   {(duzenleyebilir || silebilir) && <th className="pb-2 font-medium"></th>}
                 </tr>

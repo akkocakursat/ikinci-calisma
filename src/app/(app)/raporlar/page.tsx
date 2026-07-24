@@ -96,31 +96,31 @@ export default function RaporlarSayfasi() {
 
   function pivotIndir() {
     csvIndir(`firma-depo-raporu-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["Firma", ...pivot.depolar.map((d) => d.etiket), "FİRMA TOPLAMI"],
+      ["Firma", ...pivot.depolar.map((d) => d.etiket), "FİRMA TOPLAMI (kg)"],
       ...pivot.firmalar.map((f) => [
         f.ad,
-        ...pivot.depolar.map((d) => f.hucre.get(d.id) ?? 0),
-        f.toplam,
+        ...pivot.depolar.map((d) => (f.hucre.get(d.id) ?? 0) * 1000),
+        f.toplam * 1000,
       ]),
       [
         "DEPO TOPLAMI",
-        ...pivot.depolar.map((d) => pivot.depoToplam.get(d.id) ?? 0),
-        pivot.genelToplam,
+        ...pivot.depolar.map((d) => (pivot.depoToplam.get(d.id) ?? 0) * 1000),
+        pivot.genelToplam * 1000,
       ],
     ]);
   }
 
   function stokIndir() {
     csvIndir(`depo-stok-raporu-${new Date().toISOString().slice(0, 10)}.csv`, [
-      ["Depo", "Antrepo", "Toplam Giriş (ton)", "Toplam Çıkış (ton)", "Kalan Stok (ton)"],
+      ["Depo", "Antrepo", "Toplam Giriş (kg)", "Toplam Çıkış (kg)", "Kalan Stok (kg)"],
       ...stoklar.map((s) => [
         s.ad,
         s.antrepo ?? "",
-        Number(s.toplam_giris),
-        Number(s.toplam_cikis),
-        Number(s.kalan_stok),
+        Number(s.toplam_giris) * 1000,
+        Number(s.toplam_cikis) * 1000,
+        Number(s.kalan_stok) * 1000,
       ]),
-      ["GENEL TOPLAM", "", stokToplam.giris, stokToplam.cikis, stokToplam.kalan],
+      ["GENEL TOPLAM", "", stokToplam.giris * 1000, stokToplam.cikis * 1000, stokToplam.kalan * 1000],
     ]);
   }
 
@@ -129,31 +129,31 @@ export default function RaporlarSayfasi() {
       {
         ad: "Firma x Depo",
         satirlar: [
-          ["Firma", ...pivot.depolar.map((d) => d.etiket), "FİRMA TOPLAMI"],
+          ["Firma", ...pivot.depolar.map((d) => d.etiket), "FİRMA TOPLAMI (kg)"],
           ...pivot.firmalar.map((f) => [
             f.ad,
-            ...pivot.depolar.map((d) => f.hucre.get(d.id) ?? 0),
-            f.toplam,
+            ...pivot.depolar.map((d) => (f.hucre.get(d.id) ?? 0) * 1000),
+            f.toplam * 1000,
           ]),
           [
             "DEPO TOPLAMI",
-            ...pivot.depolar.map((d) => pivot.depoToplam.get(d.id) ?? 0),
-            pivot.genelToplam,
+            ...pivot.depolar.map((d) => (pivot.depoToplam.get(d.id) ?? 0) * 1000),
+            pivot.genelToplam * 1000,
           ],
         ],
       },
       {
         ad: "Depo Stok Özeti",
         satirlar: [
-          ["Depo", "Antrepo", "Toplam Giriş (ton)", "Toplam Çıkış (ton)", "Kalan Stok (ton)"],
+          ["Depo", "Antrepo", "Toplam Giriş (kg)", "Toplam Çıkış (kg)", "Kalan Stok (kg)"],
           ...stoklar.map((s) => [
             s.ad,
             s.antrepo ?? "",
-            Number(s.toplam_giris),
-            Number(s.toplam_cikis),
-            Number(s.kalan_stok),
+            Number(s.toplam_giris) * 1000,
+            Number(s.toplam_cikis) * 1000,
+            Number(s.kalan_stok) * 1000,
           ]),
-          ["GENEL TOPLAM", "", stokToplam.giris, stokToplam.cikis, stokToplam.kalan],
+          ["GENEL TOPLAM", "", stokToplam.giris * 1000, stokToplam.cikis * 1000, stokToplam.kalan * 1000],
         ],
       },
     ]);
@@ -175,12 +175,12 @@ export default function RaporlarSayfasi() {
         </Buton>
       </header>
 
-      <Card title="Sipariş Takibi — Firma Bazlı Sipariş / Teslimat Durumu (ton)" className="mb-6">
+      <Card title="Sipariş Takibi — Firma Bazlı Sipariş / Teslimat Durumu (kg)" className="mb-6">
         <SiparisTakip siparisler={siparisler} ozet={ozet} stoklar={stoklar} />
       </Card>
 
       <Card
-        title="Firma × Depo Sevkiyat Tablosu (ton)"
+        title="Firma × Depo Sevkiyat Tablosu (kg)"
         className="mb-6"
         action={
           <Buton tur="ikincil" onClick={pivotIndir} disabled={!pivot.firmalar.length}>
@@ -254,7 +254,7 @@ export default function RaporlarSayfasi() {
         )}
       </Card>
 
-      <Card title="Depo Bazlı Toplam Giriş / Çıkış (ton)" className="mb-6">
+      <Card title="Depo Bazlı Toplam Giriş / Çıkış (kg)" className="mb-6">
         {grafikVeri.length ? (
           <GirisCikisBar veri={grafikVeri} />
         ) : (
@@ -263,7 +263,7 @@ export default function RaporlarSayfasi() {
       </Card>
 
       <Card
-        title="Depo Stok Özeti (ton)"
+        title="Depo Stok Özeti (kg)"
         action={
           <Buton tur="ikincil" onClick={stokIndir} disabled={!stoklar.length}>
             <Download size={15} /> CSV İndir

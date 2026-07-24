@@ -208,7 +208,7 @@ export default function StokTakipSayfasi() {
                 <tr className="tablo-baslik">
                   <th className="pr-4">Depo / Antrepo</th>
                   <th className="pr-4">Gemi</th>
-                  <th className="pr-4 text-right">Kalan Stok (ton)</th>
+                  <th className="pr-4 text-right">Kalan Stok (kg)</th>
                   <th>Depo İçindeki Pay</th>
                 </tr>
               </thead>
@@ -310,8 +310,8 @@ export default function StokTakipSayfasi() {
                 <tr className="tablo-baslik">
                   <th className="pr-4">Firma / Depo</th>
                   <th className="pr-4">Gemi</th>
-                  <th className="pr-4 text-right">Çektiği (ton)</th>
-                  <th className="text-right">Açık Siparişi (ton)</th>
+                  <th className="pr-4 text-right">Çektiği (kg)</th>
+                  <th className="text-right">Açık Siparişi (kg)</th>
                 </tr>
               </thead>
               <tbody>

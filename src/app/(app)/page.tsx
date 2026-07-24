@@ -98,20 +98,20 @@ export default function GenelBakis() {
       if (f.durum === "gecikti")
         liste.push({
           renk: "kirmizi",
-          metin: `${f.ad} — ${formatSayi(f.acik)} ton açık sipariş, termin ${formatTarih(f.termin!)} (GECİKTİ)`,
+          metin: `${f.ad} — ${formatSayi(f.acik)} kg açık sipariş, termin ${formatTarih(f.termin!)} (GECİKTİ)`,
           href: "/siparisler",
         });
       else if (f.durum === "yaklasiyor")
         liste.push({
           renk: "sari",
-          metin: `${f.ad} — ${formatSayi(f.acik)} ton açık sipariş, termin ${formatTarih(f.termin!)}`,
+          metin: `${f.ad} — ${formatSayi(f.acik)} kg açık sipariş, termin ${formatTarih(f.termin!)}`,
           href: "/siparisler",
         });
     }
     if (toplamlar.netKalan < 0)
       liste.push({
         renk: "kirmizi",
-        metin: `Taahhütler mevcut stoğu ${formatSayi(Math.abs(toplamlar.netKalan))} ton aşıyor`,
+        metin: `Taahhütler mevcut stoğu ${formatSayi(Math.abs(toplamlar.netKalan))} kg aşıyor`,
         href: "/siparisler",
       });
     return liste;
@@ -165,24 +165,24 @@ export default function GenelBakis() {
       )}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Mevcut Stok" value={`${formatSayi(toplamlar.kalan)} ton`} icon={<Boxes size={17} />} />
-        <StatCard label="Sevk Edilen" value={`${formatSayi(toplamlar.cikis)} ton`} icon={<ArrowUpFromLine size={17} />} />
+        <StatCard label="Mevcut Stok" value={`${formatSayi(toplamlar.kalan)} kg`} icon={<Boxes size={17} />} />
+        <StatCard label="Sevk Edilen" value={`${formatSayi(toplamlar.cikis)} kg`} icon={<ArrowUpFromLine size={17} />} />
         <StatCard
           label="Açık Sipariş"
-          value={`${formatSayi(toplamlar.acikSiparis)} ton`}
+          value={`${formatSayi(toplamlar.acikSiparis)} kg`}
           sub={acikSiparisler.length ? `${acikSiparisler.length} firma bekliyor` : undefined}
           icon={<ClipboardList size={17} />}
         />
         <StatCard
           label="Satılabilir Stok"
-          value={`${formatSayi(toplamlar.netKalan)} ton`}
+          value={`${formatSayi(toplamlar.netKalan)} kg`}
           sub={toplamlar.netKalan < 0 ? "⚠ stok aşımı!" : undefined}
           icon={<PackageCheck size={17} />}
         />
       </div>
 
       <div className="mb-6 grid gap-6 xl:grid-cols-2">
-        <Card title="Depo Bazlı Kalan Stok (ton)">
+        <Card title="Depo Bazlı Kalan Stok (kg)">
           {stokGrafik.length ? (
             <YatayBarGrafik veri={stokGrafik} renk={RENK.seri1} />
           ) : (
@@ -203,7 +203,7 @@ export default function GenelBakis() {
               <thead>
                 <tr className="tablo-baslik">
                   <th className="pr-4">Firma</th>
-                  <th className="pr-4 text-right">Açık (ton)</th>
+                  <th className="pr-4 text-right">Açık (kg)</th>
                   <th className="pr-4">Termin</th>
                   <th>Durum</th>
                 </tr>
@@ -252,7 +252,7 @@ export default function GenelBakis() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card title="Son 30 Gün Sevkiyat (ton)">
+        <Card title="Son 30 Gün Sevkiyat (kg)">
           {trend.length ? <GunlukTrend veri={trend} /> : <BosDurum mesaj="Son 30 günde sevkiyat yok." />}
         </Card>
 

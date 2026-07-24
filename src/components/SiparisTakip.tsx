@@ -60,7 +60,7 @@ export default function SiparisTakip({
     for (const s of stoklar) depoEtiketleri.set(s.depo_id, depoTamAd(s));
 
     // firmanın depo bazlı fiili sevkiyatları
-    const sevkler = new Map<string, Map<string, number>>(); // firmaId -> depoId -> ton
+    const sevkler = new Map<string, Map<string, number>>(); // firmaId -> depoId -> ton (dahili)
     for (const o of ozet) {
       const m = sevkler.get(o.firma_id) ?? new Map<string, number>();
       m.set(o.depo_id, (m.get(o.depo_id) ?? 0) + Number(o.toplam_tonaj));
@@ -156,28 +156,28 @@ export default function SiparisTakip({
 
   function ozetSatirlari() {
     return [
-      ["Firma", "Toplam Sipariş (ton)", "Sevk Edilen (ton)", "Açık / Kalan (ton)", "Termin"],
+      ["Firma", "Toplam Sipariş (kg)", "Sevk Edilen (kg)", "Açık / Kalan (kg)", "Termin"],
       ...gruplar.map((g) => [
         g.firma,
-        g.siparis,
-        g.sevk,
-        g.kalan,
+        g.siparis * 1000,
+        g.sevk * 1000,
+        g.kalan * 1000,
         g.termin ? formatTarih(g.termin) : "",
       ]),
-      ["GENEL TOPLAM", genel.siparis, genel.sevk, genel.kalan, ""],
+      ["GENEL TOPLAM", genel.siparis * 1000, genel.sevk * 1000, genel.kalan * 1000, ""],
     ];
   }
 
   function detaySatirlari() {
     return [
-      ["Firma", "Depo", "Bağlı Sipariş (ton)", "Bu Depodan Sevk (ton)", "Depoda Kalan Stok (ton)"],
+      ["Firma", "Depo", "Bağlı Sipariş (kg)", "Bu Depodan Sevk (kg)", "Depoda Kalan Stok (kg)"],
       ...gruplar.flatMap((g) =>
         g.satirlar.map((s) => [
           g.firma,
           s.depoEtiket,
-          s.siparis,
-          s.genel ? "" : s.sevk,
-          s.depoKalan ?? "",
+          s.siparis * 1000,
+          s.genel ? "" : s.sevk * 1000,
+          s.depoKalan === null ? "" : s.depoKalan * 1000,
         ])
       ),
     ];
@@ -211,9 +211,9 @@ export default function SiparisTakip({
           <thead>
             <tr className="tablo-baslik">
               <th className="pr-4">Firma Özeti</th>
-              <th className="pr-4 text-right">Toplam Sipariş (ton)</th>
-              <th className="pr-4 text-right">Sevk Edilen (ton)</th>
-              <th className="pr-4 text-right">Açık / Kalan (ton)</th>
+              <th className="pr-4 text-right">Toplam Sipariş (kg)</th>
+              <th className="pr-4 text-right">Sevk Edilen (kg)</th>
+              <th className="pr-4 text-right">Açık / Kalan (kg)</th>
               <th className="pr-4">Termin</th>
               <th className="pr-4">Tamamlanma</th>
               <th>Durum</th>
@@ -320,9 +320,9 @@ export default function SiparisTakip({
           <thead>
             <tr className="tablo-baslik">
               <th className="pr-4">Firma / Depo</th>
-              <th className="pr-4 text-right">Bağlı Sipariş (ton)</th>
-              <th className="pr-4 text-right">Bu Depodan Sevk (ton)</th>
-              <th className="text-right">Depoda Kalan Stok (ton)</th>
+              <th className="pr-4 text-right">Bağlı Sipariş (kg)</th>
+              <th className="pr-4 text-right">Bu Depodan Sevk (kg)</th>
+              <th className="text-right">Depoda Kalan Stok (kg)</th>
             </tr>
           </thead>
           <tbody>

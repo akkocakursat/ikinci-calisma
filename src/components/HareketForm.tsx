@@ -36,11 +36,11 @@ export default function HareketForm({
   // mükerrer kayıt uyarısı: uyarılan değer kombinasyonu saklanır,
   // kullanıcı aynı değerlerle ikinci kez "Kaydet"e basarsa onaylanmış sayılır
   const [mukerrerUyarisi, setMukerrerUyarisi] = useState<string | null>(null);
-  // büyük değer uyarısı: virgül yerine nokta yazılması gibi yazım hatalarının
-  // tonajı binlerce kat şişirmesini önlemek için makul üst sınırın üstünde
-  // onay istenir (uyarılan değerle aynı değer tekrar gönderilirse kabul edilir)
+  // büyük değer uyarısı: yazım hatalarının (fazladan/eksik hane) tonajı
+  // ciddi şekilde şişirmesini önlemek için makul üst sınırın (ton cinsinden)
+  // üstünde onay istenir (uyarılan değerle aynı değer tekrar gönderilirse kabul edilir)
   const [buyukDegerUyarisi, setBuyukDegerUyarisi] = useState<number | null>(null);
-  const BUYUK_DEGER_ESIGI = 50000;
+  const BUYUK_DEGER_ESIGI = 50000; // ton
 
   // Sevkiyatta: seçilen depoda stoğu bulunan gemiler (düzenlemede mevcut gemi de listelenir)
   const depoGemileri = depoId
@@ -61,7 +61,7 @@ export default function HareketForm({
 
     const tonajSayi = parseTonaj(tonaj);
     if (!depoId) return setHata("Lütfen depo seçin.");
-    if (!tonajSayi) return setHata("Tonaj sıfırdan büyük bir sayı olmalı (örn. 23.147,500).");
+    if (!tonajSayi) return setHata("Tonaj (kg) sıfırdan büyük bir sayı olmalı (örn. 23.147).");
     if (tip === "cikis" && !yeniFirmaModu && !firmaId) return setHata("Lütfen firma seçin.");
     if (tip === "cikis" && yeniFirmaModu && !yeniFirma.trim())
       return setHata("Yeni firma adını yazın.");
@@ -201,14 +201,14 @@ export default function HareketForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="tonaj">Tonaj (ton)</label>
+          <label htmlFor="tonaj">Tonaj (kg)</label>
           <input
             id="tonaj"
             type="text"
             inputMode="decimal"
             value={tonaj}
             onChange={(e) => setTonaj(e.target.value)}
-            placeholder="ton — örn. 1.250,500"
+            placeholder="kg — örn. 27.540"
             required
           />
         </div>
@@ -244,7 +244,7 @@ export default function HareketForm({
                 </option>
                 {depoGemileri.map((g) => (
                   <option key={g.gemi} value={g.gemi}>
-                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} ton
+                    {g.gemi} — kalan {formatSayi(Number(g.kalan))} kg
                   </option>
                 ))}
               </select>
@@ -303,10 +303,10 @@ export default function HareketForm({
 
       {buyukDegerUyarisi !== null && (
         <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-          ⚠ <b>Çok büyük bir tonaj:</b> {formatSayi(buyukDegerUyarisi)} ton olarak kaydedilecek.
-          Ondalık ayracı virgül yerine nokta yazıldığında tonaj binlerce kat şişebilir (ör. &quot;16.262.560&quot;
-          yerine &quot;16.262,560&quot;). Değer gerçekten doğruysa aşağıdaki butona tekrar basarak onaylayın;
-          değilse tonajı virgülle yeniden yazın.
+          ⚠ <b>Çok büyük bir tonaj:</b> {formatSayi(buyukDegerUyarisi)} kg olarak kaydedilecek.
+          Bu, alışılmışın çok üzerinde bir değer — yazarken bir hane fazla/eksik girilmiş olabilir.
+          Değer gerçekten doğruysa aşağıdaki butona tekrar basarak onaylayın; değilse kg değerini
+          kontrol edip yeniden yazın.
         </p>
       )}
 
